@@ -5,6 +5,7 @@ A curated collection of skills for coding agents. Each skill contains task-speci
 | Skill | Purpose |
 | --- | --- |
 | [Agent harness engineering](skills/agent-harness-engineering/SKILL.md) | Build and improve agents, tools, prompts, and execution behavior. |
+| [Agent readiness](skills/agent-readiness/SKILL.md) | Assess and prepare repositories for reliable autonomous agent work. |
 | [Mise dotfiles sync](skills/mise-dotfiles-sync/SKILL.md) | Synchronize dotfiles across machines using mise and a private Git repository. |
 | [PR descriptions](skills/pr-descriptions/SKILL.md) | Write concise pull request descriptions. |
 | [Tailcat](skills/tailcat/SKILL.md) | Share ports, transfer files, and connect over SSH. |
@@ -39,7 +40,7 @@ npx skills add xpcmdshell/skills --list
 
 ## Install the collection through a marketplace
 
-Marketplace installation includes all six skills. If you're authenticating with SSH, replace `xpcmdshell/skills` with `git@github.com:xpcmdshell/skills.git` in the marketplace add command.
+Marketplace installation includes all skills. If you're authenticating with SSH, replace `xpcmdshell/skills` with `git@github.com:xpcmdshell/skills.git` in the marketplace add command.
 
 ### Claude Code
 

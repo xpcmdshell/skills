@@ -1,6 +1,6 @@
 {
   "name": "curated-skills",
-  "description": "Curated skills for agent harness engineering, dotfile synchronization, pull requests, Tailcat, Windows installers, and README writing.",
+  "description": "A curated collection of skills for coding agents.",
   "author": {
     "name": "xpcmdshell"
   }
