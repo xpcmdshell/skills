@@ -1,0 +1,160 @@
+# Tool design
+
+## Complete meaningful operations
+
+- Design tools around the agent's job-to-be-done domain, not the implementation behind it.
+- Give the agent a simple interface to a useful workflow.
+- Encapsulate known mechanical steps inside the tool.
+- Do not make the agent drive an internal state machine to accomplish one domain operation.
+- Return a useful work product, not merely confirmation that an internal flag changed.
+- Keep choices that require the agent's judgment visible.
+- A tool can complete one coherent part of a task without completing the entire assignment.
+- A small schema is not enough if using it requires implementation knowledge and repeated bookkeeping calls.
+
+Hide implementation complexity. Keep accepted inputs, public behavior, and outcomes explicit.
+
+## Ask for domain knowledge, not internal bookkeeping
+
+- Require arguments that represent information the agent knows or decisions it must make for its task.
+- When the harness already knows an identity, do not require the agent to copy it into tool arguments.
+- When the harness manages records and their relationships, keep that work inside the implementation.
+- Do not make the agent learn internal storage conventions merely to submit its domain work.
+- Apply this distinction by responsibility, not by field name.
+- An identifier can be appropriate when the agent must choose a resource.
+- The same identifier is unnecessary when the runner already knows the resource.
+
+## Keep schemas simple and accepted values explicit
+
+- Use the simplest schema that accurately represents the operation.
+- When a parameter accepts a fixed set of values, express those values as an enum.
+- Do not advertise an unrestricted string when backend validation accepts only specific strings.
+- Express input types, required fields, and accepted values in the agent-visible schema.
+- Keep backend validation consistent with the advertised schema.
+- Do not compensate for hidden input constraints by teaching implementation details in the agent's prompt.
+- Simplify the caller's responsibility, not just the number of fields.
+
+## Return useful results without flooding context
+
+Design both what the result communicates and how much enters the agent's context. A large response can be legitimate; its size alone is not a reason to discard it or fail the operation.
+
+### Make the result actionable
+
+- Return the work product and evidence needed for the agent's next decision, not an internal backend dump.
+- Keep operation status, partial failures, and important limitations visible separately from the bulk output.
+- Preserve provenance so the agent can trace observations to their sources.
+- Distinguish exact excerpts from generated summaries. A summary can orient the agent but does not replace source evidence.
+
+### Bound the preview, preserve the response
+
+- When output exceeds the inline budget, save the complete response to an agent-accessible file and return a bounded preview.
+- Limit what enters context, not what the tool may legitimately produce. Preserve the full response before truncating its inline representation.
+- Select a useful preview: the beginning of a document, the end of command output, or relevant excerpts.
+- Clearly label partial output and indicate its coverage where practical, such as displayed lines and total size.
+- Include the full-output path and explain how to inspect the rest with available file-reading, search, or processing tools.
+- Ensure the file is readable from the agent's execution environment and remains available for follow-up inspection.
+- Bound subsequent reads too. Provide range selection or another practical way to inspect the file without loading it all into context.
+- Account for huge single-line responses; a line-count limit alone does not bound output size.
+- Reuse the harness's output-budget and file-preservation facilities where available rather than inventing unrelated limits for each tool.
+- Surface failures to preserve the output. Do not claim the complete response is available when saving it failed.
+
+### Example: a large test run
+
+Suppose a test tool produces a megabyte of diagnostic output.
+
+- Return the run status, failed test names, and a bounded preview of relevant diagnostics.
+- Save the complete diagnostic output to a file and include its path in the result.
+- Mark the preview as incomplete so the agent does not mistake omitted diagnostics for absent diagnostics.
+- Let the agent search that file for a failed test and read the surrounding section with its ordinary tools.
+
+Dumping the megabyte into context and returning only “three tests failed” are both poor results. The first overwhelms context; the second loses evidence. The useful contract is bounded inline output, complete retained output, and an explicit way to inspect the rest.
+
+## Make recoverable failures actionable
+
+- Return recoverable tool failures to the agent as useful error messages.
+- Do not terminate the harness over a correctable tool-use mistake.
+- Do not return only `"error"`.
+- Explain what went wrong.
+- Identify the input or condition that caused the failure.
+- Explain what the agent can change or do next, when recovery is possible.
+- For an invalid enum value, name the parameter and list its accepted values.
+- Do not leave the agent guessing which undocumented value the backend accepts.
+- Do not hide a failure or report an unsuccessful operation as successful.
+
+## Describe tools for selection and use
+
+A tool description explains:
+
+- What the tool does and what useful result it returns.
+- When the agent should use it.
+- When the agent should not use it.
+- Any important conditions needed to use it correctly.
+- For potentially large results, the preview behavior and how to access complete output.
+
+Include a brief example when it resolves a likely misunderstanding. Keep the description consistent with the schema and behavior.
+
+- When composing tools through generated scripts, read [code-mode guidance](code-mode.md) for orchestration and execution behavior.
+- When exposing a large tool catalog, read [tool-discovery guidance](tool-discovery.md) for selective schema loading and intent matching.
+
+## Domain interface examples
+
+These examples demonstrate the rules above. Their fields and workflows are not universal requirements.
+
+### Web search: a useful workflow behind a small interface
+
+The existing `web_search` interface accepts:
+
+- `objective`: the research goal and relevant context.
+- `search_queries`: the keyword queries.
+- Optional constraints, such as domain restrictions or a publication cutoff.
+
+It returns source URLs and substantive Markdown evidence that the agent can reason over.
+
+- The interface speaks the agent's research domain.
+- The tool completes a useful search workflow.
+- The agent retains responsibility for interpreting evidence and choosing the next research step.
+
+A hypothetical poor interface exposes this mechanical sequence:
+
+```text
+create search request
+  → configure request
+  → start search
+  → poll status
+  → collect result IDs
+  → retrieve results
+```
+
+The problem is requiring that choreography to obtain one useful search result, not the existence of those internal steps.
+
+### Finding submission: domain work instead of database records
+
+Suppose a research runner already knows the target and manages its database records.
+
+The poor tool requires:
+
+- Build and service IDs that the runner already knows.
+- An internal evidence-strength classification.
+- Evidence record IDs that the runner manages.
+- An unrestricted `outcome` string, although hidden backend validation accepts only four values.
+
+The agent attempts submission 14 times. Each rejection omits the accepted values.
+
+- The agent spends calls guessing implementation details instead of doing its research.
+- The tool exposes bookkeeping and hides part of its input contract.
+- The error messages do not help the agent correct its calls.
+
+For this scenario, the corrected interface asks the agent for:
+
+- A finding title.
+- A technical report.
+- Exact code locations.
+
+The runner handles:
+
+- The known target identity.
+- Citations and their records.
+- Review state.
+
+These responsibilities follow this runner's context. Do not copy this field list into every reporting tool.
+
+Fix the tool contract instead of adding instructions that make the agent manage database plumbing or guess hidden values.
