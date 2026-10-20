@@ -13,9 +13,15 @@ A curated collection of skills for coding agents. Each skill contains task-speci
 
 ## Install selected skills
 
-You need access to this private repository and working Git authentication. The commands below use SSH.
+You need access to this private repository. The skills installer uses your existing HTTPS Git credentials or your GitHub CLI login (`gh auth login`).
 
 Use the skills installer to select skills and target agents:
+
+```sh
+npx skills add xpcmdshell/skills
+```
+
+Or, if you're authenticating with SSH:
 
 ```sh
 npx skills add git@github.com:xpcmdshell/skills.git
@@ -24,39 +30,39 @@ npx skills add git@github.com:xpcmdshell/skills.git
 The installer supports Claude Code, GitHub Copilot, pi, and other coding agents. To target pi's personal skill directory:
 
 ```sh
-npx skills add git@github.com:xpcmdshell/skills.git --agent pi --global
+npx skills add xpcmdshell/skills --agent pi --global
 ```
 
 To list available skills without installing them:
 
 ```sh
-npx skills add git@github.com:xpcmdshell/skills.git --list
+npx skills add xpcmdshell/skills --list
 ```
 
 ## Install the collection through a marketplace
 
-Marketplace installation includes all six skills.
+Marketplace installation includes all six skills. If you're authenticating with SSH, replace `xpcmdshell/skills` with `git@github.com:xpcmdshell/skills.git` in the marketplace add command.
 
 ### Claude Code
 
 ```sh
-claude plugin marketplace add git@github.com:xpcmdshell/skills.git
+claude plugin marketplace add xpcmdshell/skills
 claude plugin install curated-skills@skills
 ```
 
 ### GitHub Copilot CLI
 
 ```sh
-copilot plugin marketplace add git@github.com:xpcmdshell/skills.git
+copilot plugin marketplace add xpcmdshell/skills
 copilot plugin install curated-skills@skills
 ```
 
-VS Code Copilot also discovers plugins installed by Copilot CLI. You can instead register the SSH repository URL through VS Code's `chat.plugins.marketplaces` setting.
+VS Code Copilot also discovers plugins installed by Copilot CLI. You can instead register `https://github.com/xpcmdshell/skills.git` through VS Code's `chat.plugins.marketplaces` setting, or use `git@github.com:xpcmdshell/skills.git` for SSH.
 
 ### OMP
 
 ```sh
-omp plugin marketplace add git@github.com:xpcmdshell/skills.git
+omp plugin marketplace add xpcmdshell/skills
 omp plugin install curated-skills@skills
 ```
 
