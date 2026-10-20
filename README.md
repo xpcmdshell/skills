@@ -65,9 +65,3 @@ VS Code Copilot also discovers plugins installed by Copilot CLI. You can instead
 omp plugin marketplace add xpcmdshell/skills
 omp plugin install curated-skills@skills
 ```
-
-## Maintain the collection
-
-Add a self-contained directory under `skills/` with a `SKILL.md` containing `name` and `description` frontmatter. Put supporting files beside it and use relative links.
-
-The collection uses standard skill discovery and one shared marketplace catalog. New skill directories need no catalog entry. Plugin versions are omitted so Claude Code tracks commits when users update the collection.
