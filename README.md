@@ -13,8 +13,6 @@ A curated collection of skills for coding agents. Each skill contains task-speci
 
 ## Install selected skills
 
-You need access to this private repository. The skills installer uses your existing HTTPS Git credentials or your GitHub CLI login (`gh auth login`).
-
 Use the skills installer to select skills and target agents:
 
 ```sh
