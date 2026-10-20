@@ -31,7 +31,6 @@ Resources for connecting real models and using existing agent SDKs, harnesses, a
 ## Notable capabilities
 
 - Most frameworks share the basic agent loop and tool calling. The distinctions below highlight less universal capabilities.
-- These are selected examples, not an exhaustive support matrix.
 
 ### Programmatic tool calling
 
@@ -58,7 +57,6 @@ Resources for connecting real models and using existing agent SDKs, harnesses, a
 - Simple tasks can sometimes use Flash-tier models. More complex tasks may need a higher-capability model.
 - Some models perform unusually well for their price in particular domains; a general tier ranking does not capture this.
 - [GLM-5.3-Flash](https://huggingface.co/zai-org/GLM-5.3-Flash) and [MiMo-V2.6-Flash](https://mimo.mi.com/models/en-US/mimo-v2.6-flash) are examples to consider for code-security review, including vulnerability discovery.
-- These are task-specific leads, not a universal model ranking.
 
 ## Inference providers and gateways
 

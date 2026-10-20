@@ -1,12 +1,12 @@
 # Durable execution
 
-Use durable execution when a task must survive the process or machine that runs it. Reuse framework support or a compatible execution service. Do not build a workflow engine to add agent recovery.
+Use durable execution when a task must survive the process or machine that runs it. Reuse framework support or a compatible execution service.
 
 ## Choose it for the task
 
 - Durable execution suits interrupted agent runs, long waits, human approvals, and work on disposable workers.
 - Ordinary execution can suffice when restarting the whole task is cheap and safe.
-- Conversation persistence restores prior messages. It does not necessarily restore pending work or resume an interrupted tool call.
+- Conversation persistence restores prior messages. Resuming pending work requires execution-recovery support.
 - [Compaction](compaction.md) preserves context for reasoning. [Memory and history](memory-and-history.md) covers retention and recall. Neither replaces execution recovery.
 
 ## Understand the pattern
@@ -32,7 +32,7 @@ Use durable execution when a task must survive the process or machine that runs 
 | Recovery scope | Identify which model calls, tools, child tasks, and waits the integration records. |
 | Durable storage | Keep execution records outside infrastructure that can disappear. An ephemeral local database does not meet this requirement. |
 | Activation | Identify what detects interrupted work and schedules replacement compute. A library may require application-managed hosting. |
-| Entry points | Use the durable invocation path. Attaching an integration does not necessarily make ordinary agent calls durable. |
+| Entry points | Use the integration's durable entry point for agent calls. |
 | Recovery boundaries | Choose checkpoint settings that cover abrupt worker loss. Shutdown-only persistence cannot protect against a destroyed process. |
 | External effects | Follow retry contracts. Use service-supported idempotency or reconciliation where a repeated operation can cause harm. |
 | Artifacts and environments | Persist required artifacts and recreate needed environments. Recorded shell output does not restore the filesystem that produced it. |
@@ -42,7 +42,7 @@ Use durable execution when a task must survive the process or machine that runs 
 - Do not interpret durable execution as an exactly-once guarantee for arbitrary external effects.
 - Do not assume detached background work or unwrapped I/O inherits the agent's durability.
 - Use durable waits for external input, rather than keeping a process asleep or polling indefinitely.
-- Check cancellation behavior across restarts. Stopping a caller does not necessarily cancel its durable work or undo completed effects.
+- Establish whether caller cancellation propagates to the durable task and how that cancellation persists across restarts.
 
 ## Verify recovery, not just persistence
 
@@ -60,5 +60,3 @@ Use durable execution when a task must survive the process or machine that runs 
 - [OpenAI Agents SDK with Temporal](https://docs.temporal.io/develop/python/integrations/openai-agents): study framework integration with durable orchestration and separate execution of external-I/O tools.
 - [Cloudflare Agents with Workflows](https://developers.cloudflare.com/agents/concepts/workflows/): study the separation between an interactive agent and durable background work.
 - [pi-durable](https://github.com/earendil-works/pi/tree/main/packages/durable): study harness-level recovery and explicit tool replay contracts. Its APIs are experimental.
-
-These examples illustrate different integration choices. Select existing support for the deployment and task, not durability as a universal requirement.

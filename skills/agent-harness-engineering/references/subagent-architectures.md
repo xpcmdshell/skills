@@ -21,7 +21,7 @@ Communication handles questions and unexpected discoveries. It does not replace 
 
 ### Example: implement two modules against an agreed contract
 
-Suppose a feature needs an importer and a storage module.
+Suppose a contact-import feature needs an importer and a storage module. The project already has a CSV parser and a SQLite `Database` type in `src/database.ts`.
 
 **Poor breakdown:**
 
@@ -29,16 +29,67 @@ Suppose a feature needs an importer and a storage module.
 
 Both agents must invent the shared record format and storage behavior. Their implementations can each look reasonable while remaining incompatible.
 
-**Better breakdown:**
+**Shared contract, established before dispatch in `src/contacts/contract.ts`:**
 
-- The parent establishes the record type and storage interface before dispatch.
-- The contract defines validation responsibilities, duplicate handling, and error behavior for this feature.
-- Agent A owns importer files and tests against the agreed storage interface.
-- Agent B owns storage files and tests against the same contract.
-- The parent owns shared contract files and final integration.
-- If either child discovers a contract problem, it reports the issue before changing the shared agreement.
+```ts
+export interface Contact {
+  id: string;
+  displayName: string;
+}
 
-These module names and contract details illustrate the decomposition, not a required architecture. The transferable rule is to resolve shared decisions before assigning independent implementations.
+export interface ContactStore {
+  // Insert new IDs and replace existing contacts with matching IDs.
+  // Commit the whole batch or reject without changing stored contacts.
+  save(contacts: readonly Contact[]): Promise<void>;
+}
+```
+
+**Brief sent to the importer agent:**
+
+```text
+Goal: import CSV contacts into persistent storage.
+Own src/contacts/import-csv.ts and tests/import-csv.integration.ts.
+Read src/contacts/contract.ts. The storage agent implements ContactStore.
+
+Export importContacts(csv: string, store: ContactStore): Promise<number>.
+Use the project's CSV parser. Require id and displayName columns.
+Reject empty field values and duplicate IDs within the input.
+Validate the whole input before calling store.save once.
+Return the imported row count after save succeeds. Propagate save failures.
+
+Test valid input and an invalid later row through the importer and a real
+store once the storage implementation is available. Invalid input must
+leave stored contacts unchanged.
+Return changed paths and integration results, including blocked checks.
+Choose private helpers freely. Send shared-contract issues to the parent
+through the message tool before changing the contract.
+```
+
+**Brief sent to the storage agent:**
+
+```text
+Goal: persist CSV-imported contacts across application restarts.
+Own src/contacts/sqlite-store.ts and tests/sqlite-store.integration.ts.
+Read src/contacts/contract.ts. The importer agent validates CSV input.
+
+Export createContactStore(db: Database): ContactStore using the project's
+SQLite Database type from src/database.ts. The caller owns the connection lifetime.
+Implement save with a transaction: insert new IDs and replace matching IDs.
+Resolve after commit. Reject on failure with no partial batch committed.
+
+Test insertion, replacement, and rollback against a real temporary database.
+Reopen the database to verify persistence.
+Return changed paths and integration results.
+Choose private helpers freely. Send shared-contract issues to the parent
+through the message tool before changing the contract.
+```
+
+The parent owns `contract.ts`, supplies its path to both children, and wires the importer to storage for final integration.
+
+- Separate files do not make the assignments independent. Each child needs useful work it can complete without repeated decisions from the other.
+- The shared contract settles record format and storage behavior so both children can implement against the same agreement.
+- A written contract is insufficient if important design decisions still require continual joint adjustment.
+- Keep that work together until those decisions are resolved. Splitting it earlier adds handoffs rather than useful parallelism.
 
 ## Give each child a complete brief
 
@@ -81,7 +132,9 @@ When a child discovers a shared contract problem:
 
 ## Support the full lifecycle
 
-Expose the capabilities needed to coordinate work from dispatch through termination. The operation names below illustrate a coherent interface; their exact spelling is not required.
+Expose the capabilities needed to coordinate work from dispatch through termination.
+
+Example coordination interface:
 
 | Capability | Required behavior |
 | --- | --- |

@@ -6,7 +6,7 @@ Treat working context, retained history, and durable memory as separate design c
 
 | Decision | Purpose |
 | --- | --- |
-| Compaction | Reduce the model's working context while preserving what it needs to continue. |
+| [Compaction](compaction.md) | Summarize accumulated conversation context while preserving what the agent needs to continue. |
 | History retention | Store the original interaction for purposes such as debugging and observability. |
 | Agent recovery access | Let the agent retrieve omitted information from retained history when that access suits the task. |
 
@@ -16,13 +16,10 @@ Treat working context, retained history, and durable memory as separate design c
 - When history recovery is supported, provide an explicit retrieval path; stored material is not automatically accessible context.
 - Do not depend on later transcript recovery when the application does not retain or expose that transcript.
 
-When implementing context reduction, read [compaction guidance](compaction.md). When injecting recalled material, apply [prompt-writing guidance](prompt-writing.md) and [cache-aware construction](prompt-caching.md#construct-stable-prefixes).
-
 ## Study optional long-term recall designs
 
 - Add long-term recall only when tasks need information beyond the current working context.
 - Choose designs by required information, recall fidelity, and access method—not by storage technology alone.
-- Use these examples to study design choices, not as dependency recommendations or required architecture.
 - Combine patterns where needed; one implementation can illustrate several patterns.
 
 ### Retrieve durable knowledge across tasks

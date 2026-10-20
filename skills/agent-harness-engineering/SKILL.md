@@ -1,6 +1,6 @@
 ---
 name: agent-harness-engineering
-description: "Build, extend, and improve AI agents and their harnesses. Use when creating an agent, choosing an agent SDK or model provider, or adding or changing tools, prompts, skills, context management, memory, subagents, or execution and recovery behavior. Covers standalone agent applications and plugins or extensions to existing coding-agent harnesses."
+description: "Build, extend, and improve AI agents, including the skills, prompts, tools, and integrations they use. Use when writing or revising agent skills or system prompts; creating or improving agent tools, plugins, or extensions; adding capabilities to an existing agent or harness; designing subagent delegation or coordination; implementing tool discovery, programmatic tool calling, context management, compaction, prompt caching, memory, or execution recovery; or choosing SDKs and model providers for an agent application. Applies to individual improvements in existing systems as well as new agents and custom harnesses."
 ---
 
 # Agent harness engineering

@@ -33,6 +33,51 @@ Hide implementation complexity. Keep accepted inputs, public behavior, and outco
 - Do not compensate for hidden input constraints by teaching implementation details in the agent's prompt.
 - Simplify the caller's responsibility, not just the number of fields.
 
+### Example: expose accepted values before the call
+
+Suppose `record_assessment` records whether evidence supports an investigated claim. The agent chooses the outcome and explains its reasoning.
+
+**Poor agent-visible schema:**
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "outcome": { "type": "string" },
+    "reason": { "type": "string" }
+  },
+  "required": ["outcome", "reason"],
+  "additionalProperties": false
+}
+```
+
+The backend accepts only `supported`, `unsupported`, or `inconclusive`, but this schema also advertises `confirmed` as valid input.
+
+**Corrected agent-visible schema:**
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "outcome": {
+      "type": "string",
+      "enum": ["supported", "unsupported", "inconclusive"],
+      "description": "Whether the evidence supports the claim. Use inconclusive when the evidence cannot settle it."
+    },
+    "reason": {
+      "type": "string",
+      "description": "Explain how the evidence supports the chosen outcome, with references to the relevant sources."
+    }
+  },
+  "required": ["outcome", "reason"],
+  "additionalProperties": false
+}
+```
+
+- The enum communicates valid choices before execution. The description explains how to choose among them.
+- Backend validation still enforces the contract. It no longer contains a secret part of that contract.
+- The reason remains freeform because the agent must explain its evidence, not select from a fixed vocabulary.
+
 ## Return useful results without flooding context
 
 Design both what the result communicates and how much enters the agent's context. A large response can be legitimate; its size alone is not a reason to discard it or fail the operation.
@@ -59,12 +104,25 @@ Design both what the result communicates and how much enters the agent's context
 
 ### Example: a large test run
 
-Suppose a test tool produces a megabyte of diagnostic output.
+Suppose a test tool finishes successfully, but one test fails and the run produces a megabyte of diagnostics.
 
-- Return the run status, failed test names, and a bounded preview of relevant diagnostics.
-- Save the complete diagnostic output to a file and include its path in the result.
-- Mark the preview as incomplete so the agent does not mistake omitted diagnostics for absent diagnostics.
-- Let the agent search that file for a failed test and read the surrounding section with its ordinary tools.
+```json
+{
+  "executionStatus": "completed",
+  "testOutcome": "failed",
+  "failedTests": ["refund completes after settlement"],
+  "diagnostics": {
+    "preview": "FAIL refund completes after settlement\nExpected: completed\nReceived: pending",
+    "previewComplete": false,
+    "fullOutputPath": "/artifacts/test-run-184.log",
+    "nextRead": "Search this file for the failed test name, then read the surrounding lines."
+  }
+}
+```
+
+- The tool executed, the tests failed, and the preview is partial. These are three separate facts in the response.
+- The agent can investigate immediately without loading every diagnostic into context.
+- The tool saves the full output before returning its path. The agent's file tools can access that path.
 
 Dumping the megabyte into context and returning only “three tests failed” are both poor results. The first overwhelms context; the second loses evidence. The useful contract is bounded inline output, complete retained output, and an explicit way to inspect the rest.
 
@@ -80,6 +138,21 @@ Dumping the megabyte into context and returning only “three tests failed” ar
 - Do not leave the agent guessing which undocumented value the backend accepts.
 - Do not hide a failure or report an unsuccessful operation as successful.
 
+For the `record_assessment` example, a rejected call with `outcome: "confirmed"` can return:
+
+```json
+{
+  "status": "error",
+  "code": "invalid_argument",
+  "parameter": "outcome",
+  "received": "confirmed",
+  "acceptedValues": ["supported", "unsupported", "inconclusive"],
+  "message": "Choose the outcome that matches your evidence and resubmit. No assessment was saved."
+}
+```
+
+The agent can correct the call without guessing values or wondering whether the rejected submission created a record.
+
 ## Describe tools for selection and use
 
 A tool description explains:
@@ -92,12 +165,7 @@ A tool description explains:
 
 Include a brief example when it resolves a likely misunderstanding. Keep the description consistent with the schema and behavior.
 
-- When composing tools through generated scripts, read [code-mode guidance](code-mode.md) for orchestration and execution behavior.
-- When exposing a large tool catalog, read [tool-discovery guidance](tool-discovery.md) for selective schema loading and intent matching.
-
 ## Domain interface examples
-
-These examples demonstrate the rules above. Their fields and workflows are not universal requirements.
 
 ### Web search: a useful workflow behind a small interface
 
@@ -109,9 +177,11 @@ The existing `web_search` interface accepts:
 
 It returns source URLs and substantive Markdown evidence that the agent can reason over.
 
-- The interface speaks the agent's research domain.
-- The tool completes a useful search workflow.
-- The agent retains responsibility for interpreting evidence and choosing the next research step.
+- The agent supplies the research goal and queries. The tool returns evidence for that research.
+- Creating requests, polling, and retrieving results are known mechanical steps. Asking the agent to perform them adds no research judgment.
+- Deciding whether the evidence answers the question depends on the goal and what the results reveal.
+- Keep that decision with the agent, which can refine the search, investigate conflicting evidence, or answer the question.
+- Completing more of the workflow inside the tool is useful only when it removes mechanics without taking over task-dependent judgment.
 
 A hypothetical poor interface exposes this mechanical sequence:
 
@@ -124,7 +194,7 @@ create search request
   → retrieve results
 ```
 
-The problem is requiring that choreography to obtain one useful search result, not the existence of those internal steps.
+The tool should perform these steps internally and return the evidence. The agent should not coordinate them merely to obtain a search result.
 
 ### Finding submission: domain work instead of database records
 
@@ -155,6 +225,42 @@ The runner handles:
 - Citations and their records.
 - Review state.
 
-These responsibilities follow this runner's context. Do not copy this field list into every reporting tool.
+An agent-visible input schema for this corrected `submit_finding` tool:
 
-Fix the tool contract instead of adding instructions that make the agent manage database plumbing or guess hidden values.
+```json
+{
+  "type": "object",
+  "properties": {
+    "title": { "type": "string", "description": "Name the finding." },
+    "report": { "type": "string", "description": "Explain the finding and its supporting evidence." },
+    "locations": {
+      "type": "array",
+      "description": "Code locations supporting the finding, relative to the target repository.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string" },
+          "startLine": { "type": "integer", "minimum": 1, "description": "First line, counted from 1." },
+          "endLine": { "type": "integer", "minimum": 1, "description": "Last line, inclusive, at or after startLine." }
+        },
+        "required": ["path", "startLine", "endLine"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["title", "report", "locations"],
+  "additionalProperties": false
+}
+```
+
+The backend checks location ranges against the target source. The agent supplies source locations, not database citation IDs.
+
+The responsibilities determine which inputs belong in the contract:
+
+- The runner supplies the known target identity. Copying it through model output adds no decision and introduces another opportunity for error.
+- The agent supplies exact code locations as evidence. The runner creates citation records and links them to the finding.
+- The runner manages review state because submitting research does not require the agent to manage the review workflow.
+- If the task requires the agent to classify a finding, retain that input and explain its meaning and accepted values.
+- Hidden accepted values are a schema defect. Expose them rather than removing a useful input or making the agent guess.
+
+A smaller schema helps when it removes unnecessary caller responsibility. Renaming bookkeeping fields or hiding them in a report does not fix the boundary.

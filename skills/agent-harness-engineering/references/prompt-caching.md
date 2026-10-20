@@ -21,11 +21,36 @@ Prefix caches reuse matching input, subject to the provider's block boundaries a
 
 Suppose a harness inserts the current time before otherwise stable instructions and conversation history on every request.
 
-- The timestamp changes the prefix before the reusable material, preventing reuse of that later material through this prefix.
-- Remove the timestamp if the task does not need it.
-- If time matters, supply it as current task context without rewriting the stable prefix, where request semantics permit.
+**Poor request construction, shown in prefix order:**
 
-The lesson is to avoid incidental early mutations, not to prohibit timestamps or necessary instruction changes.
+```text
+Request 1                         Request 2
+system: Current time 10:00         system: Current time 10:01  <- first change
+        Stable instructions               Stable instructions
+tools:  Tool definitions           tools:  Same definitions
+history: Existing messages         history: Same messages
+                                           New exchange
+```
+
+The early timestamp changes the prefix before the reusable instructions, definitions, and history.
+
+**When time matters, append a timestamped observation without rewriting earlier content:**
+
+```text
+Request 1                         Request 2
+system: Stable instructions       system: Same instructions
+tools:  Tool definitions           tools:  Same definitions
+history: Existing messages         history: Same messages
+         Time observation: 10:00            Time observation: 10:00
+                                           Assistant response
+                                           Time observation: 10:01
+                                           New task input
+```
+
+- The second request preserves the earlier prefix, including the old observation as part of the conversation history.
+- The latest observation supplies current time. It does not revise the earlier message in place.
+- Keep instructions at their required priority. Place runtime observations where the provider supports that task context.
+- Remove time entirely when the task does not need it. Confirm eligible-prefix reuse using provider cache telemetry.
 
 ### Account for deliberate invalidation
 
@@ -33,6 +58,7 @@ The lesson is to avoid incidental early mutations, not to prohibit timestamps or
 - Recognize first-time cache population, intentional prefix changes, and accepted expiry as expected cold work.
 - Evaluate context reduction alongside its effect on cache reuse; fewer input tokens alone do not establish lower cost or latency.
 - Do not avoid necessary compaction merely to preserve a cache hit.
+- When changing summarization or retained history to improve cache reuse, follow [compaction guidance](compaction.md) to preserve correct continuation.
 
 ### Diagnose unexpected misses
 
@@ -53,11 +79,9 @@ Cache-aware context construction is baseline guidance. Cache warming is optional
 - If warming is chosen, reuse the relevant prefix before expiry with minimal additional input and output.
 - A standalone tiny request does not warm a conversation unless it reaches that conversation's relevant cached prefix.
 - Confirm that the provider refreshes the cache as expected; do not assume a universal expiry or refresh mechanism.
-- Account for cached reads and any new input, output, or cache-write charges. Warming is not free.
+- Account for cached reads and any new input, output, or cache-write charges.
 - Compare warming cost with the expected cost and latency of a cold restart.
 - Intentionally allowing idle caches to expire is valid. Do not add periodic warming as an automatic default.
-
-When changing compaction behavior, read [compaction guidance](compaction.md) to preserve correct continuation alongside cache reuse.
 
 ## Verify cache behavior
 

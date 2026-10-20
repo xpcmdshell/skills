@@ -7,7 +7,6 @@
 - Intermediate data can stay in the runtime instead of entering the model's context.
 - Return the evidence needed for the next decision, rather than every intermediate response.
 - Use code for coordination the agent can already specify; return to the model when the next step requires judgment.
-- Keep tools domain-shaped; scriptability does not excuse exposing internal bookkeeping.
 
 ## Example: inspect a dataset of test runs
 
@@ -70,7 +69,6 @@ text({
 - Retrieval failures remain visible; missing reports do not count as passing tests.
 - Structured outputs let scripts inspect results without fragile parsing of human-oriented text.
 - Follow each tool's failure contract; some tools return error fields instead of rejecting calls.
-- PTC reduces model coordination and intermediate context, not the underlying service workload.
 - Respect service concurrency and rate limits when executing large fan-outs.
 - Apply [bounded-result guidance](tool-design.md#return-useful-results-without-flooding-context) when the collected findings themselves become large.
 - Preserve normal permission checks and tracing for calls made through scripts.
@@ -84,7 +82,6 @@ When the tool catalog needs on-demand discovery, read [tool-discovery guidance](
 - Several established frameworks ship code-mode support, sometimes through optional packages rather than default configuration.
 - A shell or code sandbox alone is not PTC; generated code must also reach the intended tools through callable bindings.
 - Use the references below to study, import, or adapt implementations that fit the existing application.
-- Check current versions, licenses, runtime requirements, and tool-call controls before adopting or copying code.
 - Verify nested-call permissions, cancellation, errors, and tracing instead of assuming they match direct calls.
 
 ### Framework and harness integrations
@@ -117,5 +114,3 @@ When the tool catalog needs on-demand discovery, read [tool-discovery guidance](
 
 - [Anthropic: programmatic tool calling](https://platform.claude.com/docs/en/agents-and-tools/tool-use/programmatic-tool-calling) provides managed Python execution with callbacks to application tools.
 - Study the pause-and-resume protocol: the application supplies tool results, and code consumes them without another model generation.
-- This is a provider-managed option, not a standalone runtime library; check supported models and API constraints.
-- Distinguish model turns from transport round trips; PTC can reduce the former while tool callbacks still require the latter.

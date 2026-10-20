@@ -3,18 +3,62 @@
 - Large tool catalogs consume context through schemas and descriptions, even when most tools are irrelevant.
 - Too many choices can also confuse less capable models.
 - Start with a small set of frequently needed tools and a discovery tool such as `search_tools`.
-- Give the agent enough orientation to recognize which capabilities it can search for.
+- Keep available capability areas and reasons to search them visible in the initial context, while deferring detailed tool contracts.
 - Let it search in natural language and obtain relevant descriptions, callable schemas, and usage guidance.
 - Some designs return schemas immediately; others separate discovery from detailed contract inspection.
 - Resolve the actual contract before calling a tool; do not make the agent guess names or arguments.
 - Keep direct declarations for small, stable toolsets where discovery adds more friction than value.
 - Choose by context cost and task needs, not a universal tool-count threshold.
 
+### Example: discover a service-ownership tool
+
+Suppose a harness declares `search_tools` initially and registers discovered tools for subsequent model calls.
+
+**Initial capability guidance:**
+
 ```text
-Find tools for listing test runs and reading structured test reports
-  → discover relevant tools and their contracts
-  → call them directly or compose them through code mode
+Service ownership records are available through tool search.
+When you need the team responsible for a service, use search_tools to find
+its lookup tool and obtain the current call schema.
 ```
+
+**Task and discovery call:**
+
+```text
+User: Which team owns payments-api?
+Agent: search_tools({"query": "look up the team responsible for a service"})
+```
+
+**Search result, also registered as a callable tool declaration:**
+
+```json
+{
+  "name": "get_service_ownership",
+  "description": "Return the owning team for a service from the service catalog.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "serviceName": {
+        "type": "string",
+        "description": "Exact service name, such as payments-api."
+      }
+    },
+    "required": ["serviceName"],
+    "additionalProperties": false
+  }
+}
+```
+
+**Next call and result:**
+
+```text
+Agent: get_service_ownership({"serviceName": "payments-api"})
+Tool: {"serviceName": "payments-api", "owningTeam": "Payments Platform"}
+```
+
+- The agent knows ownership lookup exists before it knows the tool name or parameter spelling.
+- The search result supplies the contract. The harness registration makes the discovered tool callable on the next turn.
+- Hiding detailed schemas reduces initial context. Hiding all awareness of the capability removes the reason to search.
 
 ## Match tools by intent
 
