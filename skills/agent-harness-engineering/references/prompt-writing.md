@@ -3,7 +3,7 @@
 > **“Show your prompt to a colleague with minimal context on the task and ask them to follow it. If they'd be confused, Claude will be too.”**
 > — [Anthropic: Prompting best practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices)
 
-Write for the agent receiving the prompt, not for the developer who already understands the system.
+Write for the agent receiving the prompt, not for yourself. It does not know what is in your head or inherit your conversation with the user. Supply the decisions and task knowledge it needs in the context it actually receives. Keep that reader's task in view throughout. Include material that helps it act or explicitly illustrates an insight it needs. Remove narration and bookkeeping that merely record what the author encountered.
 
 ## Supply the task context
 

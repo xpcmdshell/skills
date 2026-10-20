@@ -45,7 +45,7 @@ Open with the governing approach. Explain the entities, relationships, constrain
 
 Suppose a skill teaches performance diagnosis for a reporting application.
 
-**Recipe-only guidance:**
+**Guidance that assumes the cause and remedy:**
 
 > Inspect the query plan, add an index, and rerun the report.
 
@@ -57,7 +57,7 @@ Suppose a skill teaches performance diagnosis for a reporting application.
 >
 > After a change, compare timings under equivalent conditions and confirm that report results remain unchanged. If workload conditions differ, treat the performance comparison as inconclusive.
 
-- The recipe assumes the database causes the delay and an index fixes it before establishing either.
+- The first excerpt assumes the database causes the delay and an index fixes it before establishing either.
 - The better guidance locates the delay before choosing an intervention. A rendering bottleneck needs a different investigation from slow database execution.
 - A scan can be appropriate when the query needs most rows. Seeing a scan alone does not justify adding an index.
 - The guidance teaches the agent to choose actions from evidence, rather than repeat the same fix for every slow report.

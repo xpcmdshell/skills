@@ -21,7 +21,7 @@ Read the references that match the work before designing or making changes. Load
 | Large tool catalogs: on-demand discovery, intent matching, and schema loading | [Tool discovery](references/tool-discovery.md) |
 | System prompts, task instructions, and subagent briefs | [Prompt writing](references/prompt-writing.md) |
 | Skills: authoring, expertise transfer, and reference organization | [Writing skills](references/writing-skills.md) |
-| Subagents: work breakdown, delegation, communication, and lifecycle management | [Subagent architectures](references/subagent-architectures.md) |
+| Subagents: framework integration, parent instructions, child profiles, model selection, and management tools | [Subagent architectures](references/subagent-architectures.md) |
 | Prompt caching: stable prefixes, invalidation, diagnostics, and optional warming | [Prompt caching](references/prompt-caching.md) |
 | Compaction: continuation checkpoints, coherent history, and transition failures | [Compaction](references/compaction.md) |
 | Durable execution: worker loss, long waits, and recovery through existing frameworks | [Durable execution](references/durable-execution.md) |
