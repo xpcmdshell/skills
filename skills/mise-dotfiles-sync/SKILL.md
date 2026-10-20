@@ -11,16 +11,27 @@ Keep selected dotfiles synchronized across machines using mise’s built-in file
 
 ## Prerequisites
 
-- **mise 2026.9.2 or newer** on each machine:
+- A current **mise** release on each machine:
   - macOS: `brew install mise`
   - macOS/Linux official installer: `curl -fsSL https://mise.run | sh`
   - Windows: use Scoop or winget. See [installation instructions](https://mise.jdx.dev/installing-mise.html).
 - Git installed.
 - A private repository and persistent read/write Git authentication on every machine, usable by the background service.
 
+Before running the recipes, check `mise bootstrap --help` and `mise bootstrap dotfiles --help` against the installed version. Use the [official adoption guide](https://mise.jdx.dev/bootstrap/from-repository.html) for enrolling another machine from shared history.
+
+## Select the files and their contents
+
+- Inspect whether each selected path is a regular file, directory, or symlink.
+- Mise saves a symlink itself, not its target's contents. Tracking a directory of symlinks does not enroll those targets.
+- To synchronize target contents through mise, explicitly track their real paths as well. Inspect those paths for excluded material before enrollment.
+- Alternatively, install or clone the source repository on each machine and create the discovery links there.
+
+For example, `~/.agents/skills/example` can point to `~/dev/skills/skills/example`. Sharing only the discovery link does not share `SKILL.md` or its references. Ensure the source exists on the destination machine and that the link resolves there. Recreate machine-specific absolute links for the destination rather than copying another machine's path.
+
 ## First machine
 
-1. Review the exact files/directories to share. Exclude credentials, caches, databases, and machine-specific state **before tracking**. Tracking immediately saves history.
+1. Review the selected paths and any symlink targets to share. Exclude credentials, caches, databases, and machine-specific state **before tracking**. Tracking immediately saves history.
 2. Enroll the selected paths:
    ```sh
    mise bootstrap dotfiles track ~/.config/example
@@ -42,8 +53,8 @@ Keep selected dotfiles synchronized across machines using mise’s built-in file
 1. Inspect and back up existing destination files.
 2. Preview, then import:
    ```sh
-   mise bootstrap --from-git <PRIVATE_GIT_URL> --dry-run
-   mise bootstrap --from-git <PRIVATE_GIT_URL> --yes
+   mise bootstrap --adopt <PRIVATE_GIT_URL> --dry-run
+   mise bootstrap --adopt <PRIVATE_GIT_URL> --yes
    ```
 3. If existing files conflict, deliberately select the desired version:
    ```sh
@@ -72,10 +83,12 @@ Check watcher and synchronization health without modifying tracked files:
 mise bootstrap dotfiles status
 ```
 
+On the destination machine, check that each shared symlink resolves and that the intended application can read the target content. For a skill, check access to `SKILL.md` and its supporting files. Healthy synchronization status alone does not establish that linked content arrived.
+
 **Ask the user before performing a write-based test.** Temporary probe creation, edits, and deletion become permanent Git history, which may be unwanted.
 
 If approved:
-- Create a harmless temporary file inside a tracked directory.
+- Create a harmless temporary file inside a tracked directory. For linked content managed by mise, use the explicitly tracked source directory.
 - Confirm automatic capture and propagation in both directions.
 - Remove the probe and confirm its deletion propagates. Its history remains.
 - To expedite verification rather than wait for background intervals:
