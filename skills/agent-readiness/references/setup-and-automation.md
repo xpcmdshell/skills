@@ -66,7 +66,9 @@ Assess each property independently:
 
 Use CI and repository policy for authoritative integration checks. Git hooks can provide early feedback but can be skipped. Harness hooks can enforce supported actions within that harness; assess their actual scope rather than treating them as repository-wide enforcement.
 
-For protection, examine credentials, branch rules, and review requirements around validation configuration according to the project's autonomy policy. Do not impose universal ownership files or organization workflows.
+A common recommendation is to protect the default branch against force pushes and deletion, require changes through pull requests rather than direct pushes, and require relevant CI checks to pass before merging. These are separate protections; blocking force pushes alone does not require PRs. Inspect the actual branch rules and confirm that credentials used by agents cannot bypass them. Propose missing protections and obtain approval before changing remote policy.
+
+Also examine review requirements around validation configuration according to the project's autonomy policy. Do not impose universal ownership files or organization workflows.
 
 ## Remediate
 
