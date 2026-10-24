@@ -7,6 +7,8 @@ description: Assess and prepare repositories for reliable autonomous agent work.
 
 Prepare the repository so agents can understand intended outcomes, use reliable interfaces, observe results, and detect mistakes. Assess the work the user wants to delegate, then establish the missing project capabilities.
 
+Assess the complete working experience from an unfamiliar agent's perspective: given a realistic task, can it find the relevant concepts, choose the right operation, supply its inputs, interpret the result, and recover from failure without reconstructing hidden knowledge? Follow how architecture, documentation, tools, and diagnostics work together, not just whether each exists. Favor improvements that make this path clearer and reduce repeated discovery and unnecessary work.
+
 This skill improves repositories, tooling, environments, and engineering processes. It does not perform the future feature, debugging, release, or operational job merely because that job appears in the assessment. Safeguards belong to normal project tooling, not this skill.
 
 ## Working model
