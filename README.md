@@ -1,6 +1,6 @@
 # Skills
 
-A curated collection of skills for coding agents. Each skill contains task-specific guidance and any supporting references.
+A collection of curated skills for agents.
 
 | Skill | Purpose |
 | --- | --- |
