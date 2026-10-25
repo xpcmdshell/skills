@@ -1,10 +1,10 @@
 ---
 name: windows-click-through-installer
-description: Create and test a click-through Windows installer for a project's application. Use for requests such as "make a Setup.exe", "build a Windows installer", or "add startup and uninstall options to the setup wizard". Covers the installer definition, local builder, per-user installation, upgrades, settings preservation, and installer verification. Not for installing unrelated software on the user's computer.
+description: Build and test graphical Windows installers for distributing an application to end users. Use when asked to create a Setup.exe, package an app for Windows, or build a setup wizard. Covers guided setup, shortcuts, optional startup, upgrades, settings preservation, uninstallation, and local installer builds. Not for installing unrelated software on the user's computer.
 compatibility: Windows build and verification host. PowerShell and the application's existing build tools; Inno Setup for the default packaging approach.
 ---
 
-# Build a Windows click-through installer
+# Build a Windows application installer
 
 Give users a familiar setup wizard without making them install compilers or build the application themselves. Keep the packaging source small, readable, and separate from generated artifacts.
 
