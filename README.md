@@ -8,6 +8,7 @@ A curated collection of skills for coding agents. Each skill contains task-speci
 | [Agent readiness](skills/agent-readiness/SKILL.md) | Assess and prepare repositories for reliable autonomous agent work. |
 | [Mise dotfiles sync](skills/mise-dotfiles-sync/SKILL.md) | Synchronize dotfiles across machines using mise and a private Git repository. |
 | [PR descriptions](skills/pr-descriptions/SKILL.md) | Write concise pull request descriptions. |
+| [Python best practices](skills/python-best-practices/SKILL.md) | Write idiomatic Python and configure modern project tooling. |
 | [Tailcat](skills/tailcat/SKILL.md) | Share ports, transfer files, and connect over SSH. |
 | [Windows click-through installer](skills/windows-click-through-installer/SKILL.md) | Create and verify per-user Windows installers. |
 | [Writing a README](skills/writing-a-readme/SKILL.md) | Create or revise a project README. |
