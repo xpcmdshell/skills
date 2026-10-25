@@ -15,28 +15,8 @@ A curated collection of skills for coding agents. Each skill contains task-speci
 
 ## Install selected skills
 
-Use the skills installer to select skills and target agents:
-
 ```sh
 npx skills add xpcmdshell/skills
-```
-
-Or, if you're authenticating with SSH:
-
-```sh
-npx skills add git@github.com:xpcmdshell/skills.git
-```
-
-The installer supports Claude Code, GitHub Copilot, pi, and other coding agents. To target pi's personal skill directory:
-
-```sh
-npx skills add xpcmdshell/skills --agent pi --global
-```
-
-To list available skills without installing them:
-
-```sh
-npx skills add xpcmdshell/skills --list
 ```
 
 ## Install the collection through a marketplace
