@@ -14,7 +14,7 @@ A skill combines prompt guidance with supporting files. Read [prompt-writing gui
 - Keep research inside that scope. A query-optimization skill needs plan interpretation, not a survey of database architecture.
 - Assume general competence. Spend context on unfamiliar facts, consequential distinctions, and non-obvious reasoning.
 - From documentation, recover working usage, alternatives, constraints, and authoritative lookup sources.
-- From completed work, recover why the approach worked, not the sequence of attempts.
+- From completed work, recover the requirements, constraints, established facts, assumptions, chosen mechanism, and observed outcome. Explain why the choice fits those conditions and which changes would call for another choice. Distinguish documented facts from author-derived alternatives. Preserve the reasoning, not the sequence of attempts.
 - From corrections, recover the missing concept rather than accumulating warnings about individual mistakes.
 - From examples, recover the quality standard that transfers to other cases.
 - Distinguish observed success from an established explanation. Resolve essential knowledge gaps instead of inventing guidance.
@@ -36,10 +36,20 @@ Open with the governing approach. Explain the entities, relationships, constrain
 - Give common cases a direct route to a useful result, with conditions that establish when the route applies.
 - Explain how edge cases change the reasoning or procedure.
 - Introduce categories when classification changes the next action, evidence requirement, or validity standard.
-- Turn quality labels such as “robust” into observable criteria. Identify what to inspect and which decision it changes.
+- When guidance uses a quality label, explain what that quality means for the task: which decisions it changes and what distinguishes a satisfactory result. Preserve the intended outcome without substituting an arbitrary proxy.
 - Explain important tradeoffs. Use diagnostic questions or thought experiments when they help expose a relevant property.
 - Label heuristics as heuristics and state what evidence can override them.
 - For recognizable patterns, connect the clue, its mechanism, confirming evidence, counterevidence, and limits of the conclusion.
+
+### Illustrative examples, not prescribed definitions
+
+The examples below show how to translate a quality label into task-specific guidance. Derive the relevant decisions and success conditions for the actual task; do not reuse these interpretations automatically.
+
+| Quality label | Illustrative task-specific meaning |
+| --- | --- |
+| Concise | Include what supports the requested decision, choose a clear representation, and omit repetition. |
+| Reliable | Preserve specified outcomes across the failures the system must tolerate. |
+| Actionable | Resolve the choices and supply the information needed for the recipient's next step. |
 
 ### Example: diagnose a slow report
 
@@ -174,6 +184,7 @@ Test the package from the receiving agent's context, without supplying the autho
 - If work stops too early, sharpen the completion criterion before adding more process.
 - Use fresh-context trials to check whether the agent applies the taught reasoning to new tasks without the author's context.
 - Test suspected no-op instructions against the model's behavior with and without them rather than judging by style alone.
+- When correcting an unwanted behavior, also test a task where similar behavior is necessary. Verify that the agent learns the controlling conditions rather than a blanket preference. Illustrative pairs include a short recommendation versus a complete implementation handoff, or unnecessary infrastructure versus distribution required by residency or availability. Choose pairs relevant to the capability being taught.
 - Remove whole passages that add no capability. Retain explanations that improve decisions and transfer.
 - Prune stale facts, duplicate rules, decorative examples, and unrelated qualifiers instead of continually appending corrections.
 - Report untested portions and verification limits outside the skill. Install or publish only when requested.
