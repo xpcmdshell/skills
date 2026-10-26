@@ -6,6 +6,7 @@ A collection of curated skills for agents.
 | --- | --- |
 | [Agent harness engineering](skills/agent-harness-engineering/SKILL.md) | Build and improve agents, tools, prompts, and execution behavior. |
 | [Agent readiness](skills/agent-readiness/SKILL.md) | Assess and prepare repositories for reliable autonomous agent work. |
+| [Go best practices](skills/go-best-practices/SKILL.md) | Write idiomatic Go and configure modern project tooling. |
 | [Mise dotfiles sync](skills/mise-dotfiles-sync/SKILL.md) | Synchronize dotfiles across machines using mise and a private Git repository. |
 | [PR descriptions](skills/pr-descriptions/SKILL.md) | Write concise pull request descriptions. |
 | [Python best practices](skills/python-best-practices/SKILL.md) | Write idiomatic Python and configure modern project tooling. |
