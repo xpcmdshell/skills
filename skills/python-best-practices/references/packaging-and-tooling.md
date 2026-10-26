@@ -183,6 +183,9 @@ dev = ["pytest", "ruff==0.17.2", "ty", "prek"]
 [tool.uv.build-backend]
 module-name = "event_report"
 
+[tool.ruff]
+extend = "ruff-antipatterns.toml"
+
 [tool.ruff.lint]
 extend-select = ["I", "UP", "B"]
 
@@ -190,6 +193,8 @@ extend-select = ["I", "UP", "B"]
 addopts = ["--import-mode=importlib"]
 ```
 
+- Copy the bundled [Ruff antipattern preset](../assets/ruff-antipatterns.toml) to `ruff-antipatterns.toml` beside this `pyproject.toml`.
+- Follow [antipattern setup](#configure-antipattern-checks) when merging into an existing Ruff configuration.
 - `module-name` is explicit because the import name differs from the normalized distribution name, `event_report_example`.
 - Omit that setting when the normalized distribution name already matches the source package.
 - Refresh the backend bound from uv’s current documentation when adopting a new backend release.
@@ -201,6 +206,32 @@ addopts = ["--import-mode=importlib"]
 - Verify the built distribution rather than assuming configuration includes every intended file.
 
 Sources: [uv build backend](https://docs.astral.sh/uv/concepts/build-backend/), [entry points and metadata](https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#creating-executable-scripts), [package resources](https://docs.python.org/3/library/importlib.resources.html), and [distributing typing information](https://typing.python.org/en/latest/spec/distributing.html).
+
+## Configure antipattern checks
+
+- Read [antipatterns](antipatterns.md#enforce-syntax-checks-without-pretending-they-prove-contracts) for each rule's coverage and limits.
+- For a new project, copy [assets/ruff-antipatterns.toml](../assets/ruff-antipatterns.toml) into the project as `ruff-antipatterns.toml`.
+- The preset selects `E4`, `E7`, `E9`, and `F` as an explicit baseline, then adds the targeted antipattern checks.
+- Ruff's defaults change across releases and can include broader exception rules. New projects use this baseline to avoid adopting them implicitly.
+- The configuration above inherits that preset and adds import sorting, modernization, and bugbear checks through `extend-select`.
+- Commit both configuration files. The existing Ruff command, official hook, and CI then use the same rules without another runner.
+- In an existing project, merge the preset's rule codes into the active configuration's `lint.extend-select` after reviewing current policy.
+- Use `tool.ruff.lint.extend-select` inside `pyproject.toml`, or `lint.extend-select` inside `ruff.toml` and `.ruff.toml`.
+- Preserve existing selection, ignores, exclusions, and `extend` chains. Do not overwrite another configuration or add a competing one.
+- Merge only `extend-select` for existing projects. Do not copy the new-project baseline over their current selection.
+- Existing `B` selection already includes `B009`, `B010`, and `B012`. Ruff's defaults already include `E722`.
+- Inspect intentional exclusions before enabling a conflicting rule. Keep justified narrow exceptions instead of forcing a blanket policy change.
+
+Audit without editing configuration:
+
+```sh
+uv run --locked ruff check --extend-select B009,B010,B012,E722,PGH003,PGH004,TRY203 .
+```
+
+- This command adds rule selection to the discovered project configuration. Do not replace project settings with `--config` pointing only at the preset.
+- Review diagnostics before enabling enforcement. The preset does not ban `hasattr`, dynamic names, runtime narrowing, or specified recovery.
+- Check the project's Ruff version with `ruff rule <code>` if a diagnostic differs. Do not install a second competing linter.
+- Lint cannot decide whether a field is guaranteed or whether returning a default fulfills the operation's contract.
 
 ## Run checks without changing their meaning
 
@@ -222,7 +253,7 @@ uv run --locked pytest
 ```
 
 - Use `ruff format` when applying formatting changes, then inspect the resulting diff.
-- The example adds import sorting (`I`), current Python idioms (`UP`), and bug-prone patterns (`B`) to Ruff’s defaults.
+- The example adds import sorting (`I`), current Python idioms (`UP`), and bug-prone patterns (`B`) to the preset's explicit baseline.
 - Select additional rules for actual needs. Enabling `ALL` also adopts future rules and can impose conflicting or irrelevant choices.
 - Review fixes that can change behavior, especially exception types, evaluation, or public interfaces.
 - Do not apply `--unsafe-fixes` indiscriminately to obtain a clean report.

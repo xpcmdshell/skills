@@ -12,6 +12,19 @@ description: >-
 
 Write Python around functions, ordinary objects, iterable values, and cohesive modules. Use its standard protocols and library operations directly. Choose representations and interfaces that fit the work, rather than translating another language's class hierarchy or collection pipeline. Keep callers' inputs, results, state changes, and failures clear.
 
+## Reject these antipatterns
+
+Read [Python antipatterns](references/antipatterns.md) before writing, changing, or reviewing Python code. These requirements apply without loading every topic reference:
+
+- Do not hide broken contracts behind `getattr` defaults, `hasattr`, `.get`, or repeated field extraction. Access guaranteed fields directly.
+- Do not swallow failures, log and return fake success, or silently skip unsuccessful work. Recover only under an explicit contract.
+- Do not weaken known types with `Any`, unchecked casts, optional fields, or blanket suppressions merely to silence errors.
+- Do not add classes, wrappers, helper chains, or mock-driven layers without a real responsibility. Use direct Python and library operations.
+- Do not add conversions, `.fillna`, `.dropna`, or coercion that changes results without an explicit data policy.
+- Do not invent APIs or compatibility branches. Check the installed dependency and supported versions before adding workarounds.
+- Keep real boundary validation, union narrowing, dynamic access, optional values, and specified recovery. The defect is unjustified machinery or concealed failure.
+- Use the [Ruff antipattern preset](assets/ruff-antipatterns.toml) through the [tooling recipe](references/packaging-and-tooling.md#configure-antipattern-checks) for high-signal syntax checks.
+
 ## Start with the project and the task
 
 - Read the relevant implementation and its callers before choosing a new interface.
@@ -103,10 +116,11 @@ Use this stack for new projects. Offer suitable upgrades in existing projects, b
 
 ## Read the relevant references
 
-Read the matching reference before making detailed decisions in that area. Load multiple references when the task spans their responsibilities.
+Always read [antipatterns](references/antipatterns.md) for code work. Read other references when their responsibilities match the task.
 
 | Task | Reference and purpose |
 | --- | --- |
+| Write, change, or review Python code | [Antipatterns](references/antipatterns.md): required rejection criteria, concrete replacements, legitimate exceptions, and lint coverage. |
 | Design functions, classes, modules, or a public API | [API design](references/api-design.md): choose interfaces, organize responsibilities, and preserve contracts. |
 | Add types, model records, or validate input | [Types and validation](references/types-and-validation.md): choose representations and distinguish static checking from runtime guarantees. |
 | Traverse, group, sort, or format data; change shared state, iteration, or caching | [State and iteration](references/state-and-iteration.md): choose direct idioms and preserve ordering, aliasing, consumption, and deferred work. |
@@ -117,6 +131,8 @@ Read the matching reference before making detailed decisions in that area. Load 
 
 ## Before returning work
 
+- Review the diff against the antipattern rules. Remove unjustified guards, fallbacks, conversions, and layers before returning it.
+- Confirm that malformed required input and unsuccessful operations remain observable failures, not ordinary empty results.
 - Run the project’s applicable formatting, linting, type-checking, and behavior checks. Resolve findings rather than broadly suppressing them.
 - For new features, define integration or end-to-end acceptance checks before implementation. Test observable behavior, not private implementation structure.
 - Exercise the relevant failure, cleanup, and boundary behavior, not only the successful path.
