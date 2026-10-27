@@ -127,24 +127,8 @@ orders["line_total"] = orders["price"] * orders["quantity"]
 
 ## Enforce syntax checks without pretending they prove contracts
 
-- Use the bundled [Ruff preset](../assets/ruff-antipatterns.toml) through the [setup recipe](packaging-and-tooling.md#configure-antipattern-checks).
-- The preset uses stable maintained Ruff rules and an explicit new-project baseline. It needs no custom parser, plugin, or preview mode.
-- For existing projects, merge its additional rules without replacing their current selection or intentional exceptions.
-
-| Rule | Detects | Important limit |
-| --- | --- | --- |
-| `B009`, `B010` | Constant-name `getattr` without a default and constant-name `setattr` where direct access fits. | `getattr(obj, "field", default)` and `hasattr` still need contract review. |
-| `E722` | Bare `except` handlers. | `except Exception` can still hide failures. Changing the caught type alone is not a repair. |
-| `B012` | `return`, `break`, or `continue` that exits `finally` and can discard an exception. | Cleanup and recovery semantics still need review. |
-| `TRY203` | Useless handlers that immediately reraise without adding behavior. | Meaningful translation, cleanup, and reporting remain valid. |
-| `PGH003`, `PGH004` | Blanket `type: ignore` and `noqa` comments. | A targeted suppression can still hide a real defect. |
-
-- Do not ban all `hasattr`, defaulted `getattr`, `isinstance`, `Exception`, or `Any` to approximate missing type and contract analysis.
-- Do not enable broad-exception or exception-pass bans by default. Legitimate boundary reporting and narrow cleanup suppression can trigger them.
-- Do not replace dynamic access with a cast simply to satisfy lint. Fix the contract or explain a focused exception.
-- Use suppression codes recognized by the actual checker. Explain the verified limitation instead of weakening project-wide checking.
-- Review fixes before applying them. Attribute-name normalization and comment removal can make even simple rewrites unsafe.
-- A clean lint result does not establish valid fallbacks, necessary abstractions, API availability, or correct data transformations.
+- Use the bundled [Ruff preset](../assets/ruff-antipatterns.toml) through the [tooling recipe](packaging-and-tooling.md#configure-antipattern-checks).
+- Lint cannot establish justified fallbacks, necessary abstractions, API availability, or correct data transformations. Review those contracts directly.
 
 ## Sources
 

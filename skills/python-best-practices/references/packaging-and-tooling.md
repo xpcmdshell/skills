@@ -209,7 +209,7 @@ Sources: [uv build backend](https://docs.astral.sh/uv/concepts/build-backend/), 
 
 ## Configure antipattern checks
 
-- Read [antipatterns](antipatterns.md#enforce-syntax-checks-without-pretending-they-prove-contracts) for each rule's coverage and limits.
+- The bundled preset uses stable maintained Ruff rules. It needs no custom parser, plugin, or preview mode.
 - For a new project, copy [assets/ruff-antipatterns.toml](../assets/ruff-antipatterns.toml) into the project as `ruff-antipatterns.toml`.
 - The preset selects `E4`, `E7`, `E9`, and `F` as an explicit baseline, then adds the targeted antipattern checks.
 - Ruff's defaults change across releases and can include broader exception rules. New projects use this baseline to avoid adopting them implicitly.
@@ -231,7 +231,23 @@ uv run --locked ruff check --extend-select B009,B010,B012,E722,PGH003,PGH004,TRY
 - This command adds rule selection to the discovered project configuration. Do not replace project settings with `--config` pointing only at the preset.
 - Review diagnostics before enabling enforcement. The preset does not ban `hasattr`, dynamic names, runtime narrowing, or specified recovery.
 - Check the project's Ruff version with `ruff rule <code>` if a diagnostic differs. Do not install a second competing linter.
-- Lint cannot decide whether a field is guaranteed or whether returning a default fulfills the operation's contract.
+
+### Rule coverage and limits
+
+| Rule | Detects | Important limit |
+| --- | --- | --- |
+| `B009`, `B010` | Constant-name `getattr` without a default and constant-name `setattr` where direct access fits. | `getattr(obj, "field", default)` and `hasattr` still need contract review. |
+| `E722` | Bare `except` handlers. | `except Exception` can still hide failures. Changing the caught type alone is not a repair. |
+| `B012` | `return`, `break`, or `continue` that exits `finally` and can discard an exception. | Cleanup and recovery semantics still need review. |
+| `TRY203` | Useless handlers that immediately reraise without adding behavior. | Meaningful translation, cleanup, and reporting remain valid. |
+| `PGH003`, `PGH004` | Blanket `type: ignore` and `noqa` comments. | A targeted suppression can still hide a real defect. |
+
+- Do not ban all `hasattr`, defaulted `getattr`, `isinstance`, `Exception`, or `Any` to approximate missing type and contract analysis.
+- Do not enable broad-exception or exception-pass bans by default. Legitimate boundary reporting and narrow cleanup suppression can trigger them.
+- Do not replace dynamic access with a cast simply to satisfy lint. Fix the contract or explain a focused exception.
+- Use suppression codes recognized by the actual checker. Explain the verified limitation instead of weakening project-wide checking.
+- Review fixes before applying them. Attribute-name normalization and comment removal can make even simple rewrites unsafe.
+- A clean lint result does not establish valid fallbacks, necessary abstractions, API availability, or correct data transformations.
 
 ## Run checks without changing their meaning
 
@@ -253,7 +269,6 @@ uv run --locked pytest
 ```
 
 - Use `ruff format` when applying formatting changes, then inspect the resulting diff.
-- The example adds import sorting (`I`), current Python idioms (`UP`), and bug-prone patterns (`B`) to the preset's explicit baseline.
 - Select additional rules for actual needs. Enabling `ALL` also adopts future rules and can impose conflicting or irrelevant choices.
 - Review fixes that can change behavior, especially exception types, evaluation, or public interfaces.
 - Do not apply `--unsafe-fixes` indiscriminately to obtain a clean report.

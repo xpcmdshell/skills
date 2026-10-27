@@ -176,62 +176,26 @@ Sources: [specification: variables](https://go.dev/ref/spec#Variables),
 
 ### Selection and one-to-one mapping need different construction
 
-- The first input has two nonempty names and three positions. The second input keeps no names.
-- The reserved example uses input length as a small, known upper bound, not a universal filtering policy.
-- Both filters preserve order and leave the input unchanged. The mapped byte lengths include the empty input position.
+- This fragment assumes `names []string`. Filtering appends only selected values; mapping fills every input position.
+- Both results preserve order and leave the input unchanged.
 
-```go
-package main
-
-import "fmt"
-
-func main() {
-	for _, names := range [][]string{{"fern", "", "oak"}, {""}} {
-		var selected []string
-		for _, name := range names {
-			if name == "" {
-				continue
-			}
-			selected = append(selected, name)
-		}
-		fmt.Printf("selected=%q nil=%t\n", selected, selected == nil)
-
-		lengths := make([]int, len(names))
-		for i, name := range names {
-			lengths[i] = len(name)
-		}
-		fmt.Println("lengths=", lengths)
-
-		reserved := make([]string, 0, len(names))
-		fmt.Println("reserved start:", len(reserved), cap(reserved))
-		for _, name := range names {
-			if name != "" {
-				reserved = append(reserved, name)
-			}
-		}
-		fmt.Printf("reserved=%q nil=%t\n", reserved, reserved == nil)
-		fmt.Printf("source=%q\n", names)
+```go fragment
+var selected []string
+for _, name := range names {
+	if name != "" {
+		selected = append(selected, name)
 	}
+}
+
+lengths := make([]int, len(names))
+for i, name := range names {
+	lengths[i] = len(name)
 }
 ```
 
-Expected output:
-
-```text
-selected=["fern" "oak"] nil=false
-lengths= [4 0 3]
-reserved start: 0 3
-reserved=["fern" "oak"] nil=false
-source=["fern" "" "oak"]
-selected=[] nil=true
-lengths= [0]
-reserved start: 0 1
-reserved=[] nil=false
-source=[""]
-```
-
-- The two empty filter results have equal length but different nilness because their construction differs.
-- Using `make([]string, len(names))` before appending would incorrectly add leading empty elements to these filters.
+- For `[]string{"fern", "", "oak"}`, selected names are `["fern", "oak"]` and byte lengths are `[4, 0, 3]`.
+- If no names qualify, `selected` remains nil. Reserving with `make([]string, 0, n)` instead produces a non-nil empty result.
+- Starting the filter with `make([]string, len(names))` would add unwanted empty elements before the appended names.
 
 Sources: [specification: making slices](https://go.dev/ref/spec#Making_slices_maps_and_channels),
 [append](https://go.dev/ref/spec#Appending_and_copying_slices),
@@ -540,25 +504,12 @@ Sources: [specification: string types](https://go.dev/ref/spec#String_types),
 - Use the format's encoder or template facilities when escaping or structured output matters; concatenation does not establish protocol validity.
 - Before changing output timing or buffering, read [errors and I/O](errors-and-io.md#progress-and-failure-can-arrive-together).
 
-### One formatter can serve string, byte, and output consumers
+### Write directly when the caller owns the destination
 
-- This complete command uses its arguments as names. No arguments means an empty report.
-- The example contrasts three destinations. Production code chooses the destination it needs; it need not build all three forms.
-- A fixed heading uses `+`, the count uses `Sprintf`, and already collected names use `Join`.
-- The writer loop handles incremental output. A builder materializes a string; a buffer makes bytes available.
-- Names are literal text in this display example, not an escaped wire format.
+- This fragment uses `fmt` and `io`. Names are literal display text, not an escaped wire format.
+- The writer receives each record directly. Failures propagate instead of becoming incomplete successful output.
 
-```go
-package main
-
-import (
-	"bytes"
-	"fmt"
-	"io"
-	"os"
-	"strings"
-)
-
+```go fragment
 func writeNames(w io.Writer, names []string) error {
 	for _, name := range names {
 		if _, err := fmt.Fprintf(w, "name: %s\n", name); err != nil {
@@ -567,48 +518,12 @@ func writeNames(w io.Writer, names []string) error {
 	}
 	return nil
 }
-
-func run(names []string) error {
-	heading := "report: " + strings.Join(names, ", ")
-	summary := fmt.Sprintf("items=%d", len(names))
-
-	var text strings.Builder
-	if err := writeNames(&text, names); err != nil {
-		return err
-	}
-	var data bytes.Buffer
-	if err := writeNames(&data, names); err != nil {
-		return err
-	}
-	if _, err := fmt.Fprintf(os.Stdout, "%s\n%s\nstring=%q\nbytes=%q\n",
-		heading, summary, text.String(), data.Bytes()); err != nil {
-		return err
-	}
-	return writeNames(os.Stdout, names)
-}
-
-func main() {
-	if err := run(os.Args[1:]); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-}
 ```
 
-Expected output with arguments `fern oak`:
-
-```text
-report: fern, oak
-items=2
-string="name: fern\nname: oak\n"
-bytes="name: fern\nname: oak\n"
-name: fern
-name: oak
-```
-
-- With no names, `Join`, the builder, and the buffer produce empty content, without a separator or invented record.
-- `writeNames` borrows its writer and never closes it. An error can follow earlier successful records or a partial write.
-- Use a local builder directly when no caller needs a writer-oriented operation; an interface helper is not required for every string.
+- The caller can supply a stream, `*strings.Builder` for a string, or `*bytes.Buffer` for bytes.
+- Empty input writes nothing. The function borrows its writer; it never closes it.
+- Failure can follow successful records or a partial write. The function does not promise atomic output.
+- Use a local builder directly when no caller needs a writer-oriented operation; string assembly does not require an interface helper.
 
 Sources: [specification: concatenation](https://go.dev/ref/spec#String_concatenation),
 [fmt output families](https://pkg.go.dev/fmt#hdr-Printing), [strconv.Itoa](https://pkg.go.dev/strconv#Itoa),

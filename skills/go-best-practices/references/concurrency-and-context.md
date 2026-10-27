@@ -23,120 +23,6 @@ Use [values and types](values-and-types.md) for aliasing, slice storage, and ite
 | Protect related mutable state | A mutex | Every conflicting access and the entire invariant. |
 | Publish a stable snapshot or update one atomic value | Typed `sync/atomic` operations | Pointee lifetime and compound invariants remain separate. |
 
-## Worked example: bounded work over a sequence
-
-- `ForEach` accepts standard `iter.Seq[T]`, an explicit positive concurrency, and a context-aware operation.
-- Dependencies: current Go 1.27 and `golang.org/x/sync v0.24.0`.
-- One producer owns source advancement and channel closure. Fixed workers receive jobs through an unbuffered channel.
-- At most `concurrency` callbacks execute, plus one value held by the producer awaiting delivery.
-- No per-item goroutine or guessed queue size is needed. The example does not limit retained callback results or external resources.
-- Use this helper with nonblocking sequence advancement and cleanup, such as iteration over in-memory values.
-- The sequence must stop when yield returns false. It must not wait on I/O or other goroutines.
-- Work must honor cancellation and return after releasing its owned resources. This function cannot force arbitrary work to stop.
-- Every yielded value must remain valid independently of the next yield and source cleanup until its callback finishes.
-- A source reusing byte storage must yield owned copies, such as `bytes.Clone(token)`, before asynchronous dispatch.
-- Source resources remain caller-owned and must outlive ForEach. No task may retain those resources after its callback returns.
-- The first non-nil task error stops related work cooperatively and remains inspectable. All owned tasks finish before return.
-- Parent cancellation cannot become normal completion, including an empty source or callbacks that return nil after cancellation.
-
-```go
-package work
-
-import (
-	"context"
-	"fmt"
-	"iter"
-
-	"golang.org/x/sync/errgroup"
-)
-
-// ForEach calls work concurrently for values, with at most concurrency calls active.
-// concurrency must be positive. Callbacks must return rather than panic.
-//
-// Sequence advancement and cleanup must not block on I/O or other goroutines.
-// Callbacks must honor cancellation. Values must remain valid independently of
-// subsequent yields and source cleanup until work returns.
-// The caller owns source resources and keeps them alive until ForEach returns.
-// ForEach waits for every owned task. It returns the first task error, or the
-// parent's cancellation error if tasks complete without reporting an error.
-func ForEach[T any](ctx context.Context, values iter.Seq[T], concurrency int, work func(context.Context, T) error) error {
-	if concurrency <= 0 {
-		return fmt.Errorf("concurrency must be positive: %d", concurrency)
-	}
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-
-	group, taskCtx := errgroup.WithContext(ctx)
-	jobs := make(chan T)
-	group.Go(func() error {
-		defer close(jobs)
-		for value := range values {
-			if err := taskCtx.Err(); err != nil {
-				return err
-			}
-			select {
-			case jobs <- value:
-			case <-taskCtx.Done():
-				return taskCtx.Err()
-			}
-		}
-		return nil
-	})
-	for range concurrency {
-		group.Go(func() error {
-			for {
-				select {
-				case <-taskCtx.Done():
-					return taskCtx.Err()
-				case value, ok := <-jobs:
-					if !ok {
-						return nil
-					}
-					if err := taskCtx.Err(); err != nil {
-						return err
-					}
-					if err := work(taskCtx, value); err != nil {
-						return fmt.Errorf("process value: %w", err)
-					}
-				}
-			}
-		})
-	}
-	if err := group.Wait(); err != nil {
-		return err
-	}
-	return ctx.Err()
-}
-```
-
-### What the boundary guarantees
-
-- `group.Wait` joins the producer and workers. Their cleanup completes before ForEach returns.
-- Returning from the range loop causes the sequence's yield call to return false, allowing cooperative iterator cleanup.
-- The producer alone closes jobs. Workers never close a channel another goroutine can still send on.
-- Workers inspect cancellation before invoking work, reducing unnecessary dispatch after cancellation becomes visible.
-- Cancellation can race with dispatch. This code does not promise an atomic “no new callback after cancellation” boundary.
-- The unbuffered send provides backpressure. The producer cannot enumerate an unbounded source ahead of occupied workers.
-- The final check uses the parent context, not taskCtx. Errgroup cancels taskCtx even when Wait succeeds.
-- The first reported task error wins, including cancellation reported by the producer or a worker.
-- A later callback failure does not replace an earlier cancellation error. Concurrent errors need not follow input order.
-- An error does not undo callbacks that already succeeded. Add transactions or idempotency only when the domain requires them.
-- The sequence type has no inherent producer-error result. A fallible source needs an explicit error-bearing input or another reporting contract.
-- This contract assumes non-nil context, sequence, and callback. It validates concurrency because zero has no useful worker interpretation here.
-
-### What it cannot guarantee
-
-- An existing sequence does not receive taskCtx. A source watching only the parent context cannot observe callback-triggered group cancellation.
-- Do not pass a blocking sequence merely because it accepts the parent context. Its read could outlive the callback failure.
-- For blocking or fallible sources, give an owned producer the group's context and an explicit error-return contract.
-- Cancellation cannot interrupt arbitrary iterator code blocked before its next yield.
-- Adding a goroutine around that iterator would only move the blocked work; returning early would abandon the owned task.
-- Cooperative work can still have delayed cleanup. A deadline signals the budget, not forced completion by that instant.
-- A shallow copy of T can retain pointers or slices into source storage. Generic code cannot infer the required deep copy.
-- A Seq cursor valid only during yield cannot be sent directly to asynchronous work under this contract.
-- A callback that starts detached goroutines must own and join them itself. ForEach joins callbacks, not hidden unregistered descendants.
-
 ## Context carries lifetime, not completion
 
 - Pass context explicitly, normally first, through dependent calls. Do not replace a request context with Background to conceal cancellation.
@@ -275,6 +161,108 @@ group.Wait()
 - A fixed worker population, as in ForEach, separates job delivery from goroutine admission and makes canceled sends selectable.
 - A cancellation-aware semaphore can suit another design, but add that dependency only for a real requirement.
 - Finish task registration before final waiting can observe completion. Cancellation does not repair a broken registration protocol.
+
+## Worked example: bounded work over a sequence
+
+- Use this pattern when a sequence needs bounded concurrent processing rather than one task per item.
+- Dependencies: current Go 1.27 and `golang.org/x/sync v0.24.0`.
+- One producer owns source advancement and channel closure. Fixed workers receive jobs through an unbuffered channel.
+- At most `concurrency` callbacks execute, plus one value held by the producer awaiting delivery.
+
+```go
+package work
+
+import (
+	"context"
+	"fmt"
+	"iter"
+
+	"golang.org/x/sync/errgroup"
+)
+
+// ForEach calls work concurrently for values, with at most concurrency calls active.
+// concurrency must be positive. Callbacks must return rather than panic.
+//
+// Sequence advancement and cleanup must not block on I/O or other goroutines.
+// Callbacks must honor cancellation. Values must remain valid independently of
+// subsequent yields and source cleanup until work returns.
+// The caller owns source resources and keeps them alive until ForEach returns.
+// ForEach waits for every owned task. It returns the first task error, or the
+// parent's cancellation error if tasks complete without reporting an error.
+func ForEach[T any](ctx context.Context, values iter.Seq[T], concurrency int, work func(context.Context, T) error) error {
+	if concurrency <= 0 {
+		return fmt.Errorf("concurrency must be positive: %d", concurrency)
+	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	group, taskCtx := errgroup.WithContext(ctx)
+	jobs := make(chan T)
+	group.Go(func() error {
+		defer close(jobs)
+		for value := range values {
+			if err := taskCtx.Err(); err != nil {
+				return err
+			}
+			select {
+			case jobs <- value:
+			case <-taskCtx.Done():
+				return taskCtx.Err()
+			}
+		}
+		return nil
+	})
+	for range concurrency {
+		group.Go(func() error {
+			for {
+				select {
+				case <-taskCtx.Done():
+					return taskCtx.Err()
+				case value, ok := <-jobs:
+					if !ok {
+						return nil
+					}
+					if err := taskCtx.Err(); err != nil {
+						return err
+					}
+					if err := work(taskCtx, value); err != nil {
+						return fmt.Errorf("process value: %w", err)
+					}
+				}
+			}
+		})
+	}
+	if err := group.Wait(); err != nil {
+		return err
+	}
+	return ctx.Err()
+}
+```
+
+
+### Why the lifetime and error contracts hold
+
+- `group.Wait` joins the producer and workers, including their cleanup. Returning from iteration signals false to the sequence's yield call.
+- Only the producer closes jobs. The unbuffered send prevents enumeration from running ahead of occupied workers.
+- Workers check cancellation before invoking work, but cancellation can race with dispatch. There is no atomic dispatch cutoff.
+- The final check uses the parent context. Errgroup cancels taskCtx even when Wait succeeds.
+- That check preserves parent cancellation for empty input and callbacks that return nil after cancellation.
+- The first reported task error wins, including cancellation. Later errors do not replace it; error order need not match input order.
+- Failure does not undo completed callbacks. Use transactions or idempotency only when the domain requires them.
+- Non-nil context, sequence, and callback are caller obligations. Zero concurrency is rejected because it cannot process work.
+
+### Source and callback limits
+
+- An existing sequence does not receive taskCtx. Watching only the parent context cannot reveal callback-triggered group cancellation.
+- For blocking or fallible sources, use an owned producer with the group's context and an error-return contract.
+- `iter.Seq` has no inherent producer-error result. Cancellation cannot interrupt arbitrary iterator code blocked before its next yield.
+- Moving a blocked iterator into another goroutine does not fix ownership; returning early would abandon that task.
+- A source reusing byte storage must yield owned copies, such as `bytes.Clone(token)`, before asynchronous dispatch.
+- Shallow copies of T can retain aliases. Values valid only during yield cannot be dispatched directly to asynchronous work.
+- The work bound excludes retained results, source resources, and detached callback tasks.
+- Callbacks finish owned-resource cleanup and join their child tasks before returning. ForEach cannot observe unregistered descendants.
+- Cooperative cleanup can still take time. A deadline signals a budget, not forced completion by that instant.
 
 ## Shared state needs synchronization, not timing
 

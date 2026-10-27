@@ -75,22 +75,11 @@ These handler APIs illustrate function adaptation and protocol composition, not 
 
 ### Select display style, then choose the largest applicable unit
 
-- This complete command takes a decimal byte count and a display style: `size SIZE STYLE`.
-- `bytes` preserves the integer count. Empty or `human` style selects B, KiB, or MiB; styles are case-insensitive.
-- Parsing and domain errors exit before formatting. The scoped value switch handles style selection.
-- The expressionless switch puts MiB before KiB because a MiB-sized value also satisfies the KiB condition.
-- KiB and MiB output round to one decimal place. These units are display choices, not application resource limits.
+- This fragment uses `fmt`, `strconv`, and `strings`.
+- Parse and reject invalid counts before selecting a style. The scoped initializer normalizes the style only where needed.
+- Put MiB before KiB because both conditions match a MiB-sized value.
 
-```go
-package main
-
-import (
-	"fmt"
-	"os"
-	"strconv"
-	"strings"
-)
-
+```go fragment
 func sizeLabel(raw, style string) (string, error) {
 	size, err := strconv.ParseInt(raw, 10, 64)
 	if err != nil {
@@ -122,34 +111,11 @@ func sizeLabel(raw, style string) (string, error) {
 		return fmt.Sprintf("%d B", size), nil
 	}
 }
-
-func main() {
-	if len(os.Args) != 3 {
-		fmt.Fprintln(os.Stderr, "usage: size SIZE STYLE")
-		os.Exit(2)
-	}
-	label, err := sizeLabel(os.Args[1], os.Args[2])
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-	if _, err := fmt.Fprintln(os.Stdout, label); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-}
 ```
 
-| Arguments | Observable result |
-| --- | --- |
-| `2048 bytes` | `2048 B` |
-| `2048 HUMAN` | `2.0 KiB` |
-| `1048576 human` | `1.0 MiB`, not `1024.0 KiB` |
-| `1023 human` | `1023 B` |
-| `bad human`, `-1 human`, or `2048 unknown` | Useful stderr, status 1, and no success output. |
-
-- The empty `human` case ends that switch normally and continues below; it does not fall through into `default`.
-- At an I/O boundary, an error can still follow a partial write. This command does not promise atomic or durable output.
+- `sizeLabel("2048", "bytes")` returns `"2048 B"`; `sizeLabel("2048", "HUMAN")` returns `"2.0 KiB"`.
+- The empty or `human` case continues below the first switch; it does not fall through into `default`.
+- Human output rounds to one decimal place for KiB and MiB. These display units are not resource limits.
 
 Sources: [Effective Go: if](https://go.dev/doc/effective_go#if), [switch](https://go.dev/doc/effective_go#switch),
 [Code Review Comments: indent error flow](https://go.dev/wiki/CodeReviewComments#indent-error-flow),

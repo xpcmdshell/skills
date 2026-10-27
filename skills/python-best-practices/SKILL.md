@@ -32,10 +32,8 @@ Read [Python antipatterns](references/antipatterns.md) before writing, changing,
 - Use the project’s environment and tools until the user approves a change. Offer suitable modern, mature replacements for older tooling.
 - For new projects, target the latest stable Python release unless the user requests another version or compatibility range.
 - Confirm the release from [Python’s downloads](https://www.python.org/downloads/), not just the installed interpreter.
-- During version upgrades or broader modernization, offer [concrete Python targets](references/packaging-and-tooling.md#choose-supported-python-versions-deliberately), including a supported conservative release and the latest stable release where viable.
-- Distinguish the development interpreter from the minimum supported Python version. Existing metadata is the starting point, not an instruction to retain old support during an authorized upgrade.
-- If the target is unspecified, explain dependency readiness and migration costs, recommend a target, and ask. If already specified, implement it without asking again.
-- Preserve compatibility during unrelated maintenance. Once a higher minimum is approved, align code, metadata, checks, and CI with it.
+- For upgrades or modernization, follow [version-target selection](references/packaging-and-tooling.md#choose-supported-python-versions-deliberately). Offer concrete supported targets when unspecified; apply an already selected target without asking again.
+- Distinguish interpreter upgrades from raising minimum support. Preserve compatibility during unrelated work; align code, metadata, and checks after an approved change.
 - Establish the requested behavior, including failure cases and compatibility commitments. Ask about material ambiguity; discover project facts yourself.
 - Fix the requested problem completely without turning a local change into an unrelated architecture or style rewrite.
 
@@ -116,11 +114,10 @@ Use this stack for new projects. Offer suitable upgrades in existing projects, b
 
 ## Read the relevant references
 
-Always read [antipatterns](references/antipatterns.md) for code work. Read other references when their responsibilities match the task.
+Read these references when their responsibilities match the task.
 
 | Task | Reference and purpose |
 | --- | --- |
-| Write, change, or review Python code | [Antipatterns](references/antipatterns.md): required rejection criteria, concrete replacements, legitimate exceptions, and lint coverage. |
 | Design functions, classes, modules, or a public API | [API design](references/api-design.md): choose interfaces, organize responsibilities, and preserve contracts. |
 | Add types, model records, or validate input | [Types and validation](references/types-and-validation.md): choose representations and distinguish static checking from runtime guarantees. |
 | Traverse, group, sort, or format data; change shared state, iteration, or caching | [State and iteration](references/state-and-iteration.md): choose direct idioms and preserve ordering, aliasing, consumption, and deferred work. |
@@ -139,6 +136,8 @@ Always read [antipatterns](references/antipatterns.md) for code work. Read other
 - For package changes, build and check the installed artifact outside the source checkout.
 - For performance changes, compare equivalent workloads and confirm the result contract remains correct.
 - Review whether Python's functions, protocols, collections, and standard operations express the design without redundant machinery.
+- Simplify expressions that combine too many decisions, needless nesting, and trivial helper chains. Keep abstractions only when they clarify responsibilities or callers.
+- Judge readability directly. Formatting and complexity scores do not establish that code is easy to follow.
 - Review changed callers and public behavior, including parameter names, mutation, exceptions, and lazy execution.
 - Report checks actually run, unresolved failures, and deliberate contract changes. Keep verification reports out of product documentation and code comments.
 

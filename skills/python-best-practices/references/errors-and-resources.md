@@ -35,16 +35,6 @@
 
 Sources: [handling exceptions](https://docs.python.org/3.14/tutorial/errors.html#handling-exceptions), [exception chaining](https://docs.python.org/3.14/tutorial/errors.html#exception-chaining), and [raise statements](https://docs.python.org/3.14/reference/simple_stmts.html#the-raise-statement).
 
-## Validation is not an assertion
-
-- Use explicit checks for required input validation, permissions, and domain constraints.
-- Python can remove `assert` statements under optimization. They cannot enforce checks required for correct operation.
-- Assertions are useful for internal expectations and test failures; they do not replace handling external input.
-- Recheck assumptions at a boundary where data can change or trust changes, not mechanically inside every private function.
-- Do not mistake successful parsing for successful validation. Valid JSON can contain the wrong shape or unacceptable values.
-
-Sources: [assert statements](https://docs.python.org/3.14/reference/simple_stmts.html#the-assert-statement) and [typing runtime behavior](https://docs.python.org/3.14/library/typing.html).
-
 ## Keep ownership and cleanup together
 
 - Identify who acquires a resource, who uses it, and who must close it.

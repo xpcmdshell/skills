@@ -245,11 +245,9 @@ Sources: [dataclass freezing](https://docs.python.org/3.14/library/dataclasses.h
 | `MappingProxyType(mapping)` | Runtime read-only access to that mapping | A snapshot; changes through other aliases remain visible |
 | A copied container | Independence at copied levels | Independence of nested objects that remain shared |
 
-- An annotation restricts the operations a type checker permits through that interface. It does not remove other aliases.
-- A frozen dataclass can still contain a list that callers mutate.
-- Build a value snapshot from immutable components when stable content matters.
-- Define what “snapshot” includes. Copying a dictionary alone does not freeze its mutable values.
-- Read-only interfaces can reduce accidental mutation without paying for a copy. Use them when sharing is acceptable.
+- Use read-only interfaces when sharing is acceptable; they avoid a copy without preventing writes through other aliases.
+- For a stable snapshot, define which contents must remain unchanged and build those from immutable components.
+- A frozen dataclass containing a list or a copied dictionary containing mutable values is not a deeply immutable snapshot.
 - For record representation and boundary annotations, read [types and validation](types-and-validation.md).
 
 ## Keep equality and hashing consistent

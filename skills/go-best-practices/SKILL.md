@@ -22,10 +22,8 @@ Write Go whose callers can understand its values, effects, failures, and resourc
 - Keep useful existing tools. A preferred linter or directory layout is not a reason for an unrelated migration.
 - Identify required public behavior, compatibility commitments, deployment constraints, and failure handling before changing contracts.
 - Follow explicitly requested compatibility requirements without inventing legacy support, deprecated wrappers, or staged migrations.
-- During version upgrades or broader modernization, offer [concrete Go targets](references/modules-and-tooling.md#choose-the-version-upgrade-target), such as a supported conservative release or the latest stable release.
-- Distinguish upgrading the working compiler from raising the module's required Go version. Existing directives do not require retaining the old minimum during an authorized upgrade.
-- If the target is unspecified, explain dependency and deployment readiness, recommend a target, and ask. If already specified, implement it without asking again.
-- Preserve compatibility during unrelated maintenance. Once a higher minimum is approved, align code, module requirements, checks, and CI with it.
+- For upgrades or modernization, follow [version-target selection](references/modules-and-tooling.md#choose-the-version-upgrade-target). Offer concrete supported targets when unspecified; apply an already selected target without asking again.
+- Distinguish compiler upgrades from raising the module's minimum. Preserve compatibility during unrelated work; align code, requirements, and checks after an approved change.
 - Ask about material ambiguity. Discover toolchain and repository facts yourself.
 
 | Work | Design emphasis |
@@ -128,6 +126,8 @@ Read each matching reference before making detailed decisions in its area.
 - For concurrency changes, observe actual stopping and joining rather than only receiving cancellation or seeing no race report.
 - For performance changes, compare equivalent workloads and preserve result and resource contracts.
 - Review changed callers, exported behavior, ownership, and dependency effects.
+- Simplify expressions that combine too many decisions, needless nesting, and trivial helper chains. Keep abstractions only when they clarify responsibilities or callers.
+- Judge readability directly. Formatting and complexity scores do not establish that code is easy to follow.
 - Report checks actually run and unresolved issues. Keep verification reports out of reusable documentation and code comments.
 
 ## Sources

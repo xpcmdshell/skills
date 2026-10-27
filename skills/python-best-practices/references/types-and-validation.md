@@ -43,7 +43,7 @@
 - `slots=True` changes layout and attribute behavior. Use it for an identified need, not as automatic decoration.
 - A `__post_init__` check can enforce constructor constraints that all construction paths need.
 - That check does not automatically validate future assignments or mutations inside a field.
-- Keep mutation, equality, hashing, and copying decisions in [state and iteration](state-and-iteration.md).
+- Read [state and iteration](state-and-iteration.md#separate-read-only-access-from-immutable-data) for read-only access, snapshots, mutation, equality, and copying.
 
 ### TypedDict separates key presence from value type
 
@@ -93,9 +93,12 @@ print(receipt_note(without_note))
 - Decide whether unknown fields are rejected, ignored, or preserved. Accidental defaults are not a schema policy.
 - Validate at a trust boundary, then avoid repeated checks inside operations that already receive validated values.
 - Revalidate when values can change outside the trusted owner or cross a new trust boundary.
-- Do not use `assert` for required input checks. Optimization can remove assertions.
+- Use explicit checks for required input validation, permissions, and domain constraints. Optimization can remove `assert` statements.
+- Reserve assertions for internal expectations and tests, not external-input handling.
 - Do not substitute `cast` or a return annotation for these checks.
 - Read [errors and resources](errors-and-resources.md) for error translation, sensitive diagnostics, and format-specific parsing concerns.
+
+Sources: [assert statements](https://docs.python.org/3.14/reference/simple_stmts.html#the-assert-statement) and [typing runtime behavior](https://docs.python.org/3.14/library/typing.html).
 
 ### A small parser can establish a precise record
 
@@ -184,7 +187,7 @@ except ValueError as error:
 
 - Accept the broadest input contract that the implementation actually supports, not the broadest available type name.
 - An `Iterable` does not promise independent repeated passes. Materialize deliberately or require a stronger representation.
-- `Mapping` and `Sequence` omit mutation operations from their interfaces. They do not make objects deeply immutable.
+- Read-only interfaces do not establish immutable contents. Use the [state and snapshot guidance](state-and-iteration.md#separate-read-only-access-from-immutable-data) when stability matters.
 - Return a concrete type when that is the useful promised result, such as a newly built list.
 - Return an abstract interface when a view, interchangeability, or implementation freedom is an intentional API promise.
 - Type annotations cannot express every behavioral constraint. Document ordering, consumption, and ownership separately.
