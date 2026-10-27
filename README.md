@@ -11,6 +11,7 @@ A collection of curated skills for agents.
 | [PR descriptions](skills/pr-descriptions/SKILL.md) | Write concise pull request descriptions. |
 | [Python best practices](skills/python-best-practices/SKILL.md) | Write idiomatic Python and configure modern project tooling. |
 | [Tailcat](skills/tailcat/SKILL.md) | A networking Swiss Army knife from the creators of Tailscale, combining netcat’s flexibility with Tailscale’s connectivity. |
+| [TypeScript best practices](skills/typescript-best-practices/SKILL.md) | Write readable TypeScript, reject common antipatterns, and configure modern project tooling. |
 | [Windows application installer](skills/windows-click-through-installer/SKILL.md) | Package apps for Windows with guided setup, upgrades, and uninstallation. |
 | [Writing a README](skills/writing-a-readme/SKILL.md) | Create or revise a project README. |
 
