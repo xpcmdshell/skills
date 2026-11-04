@@ -1,11 +1,12 @@
 ---
 name: python-best-practices
 description: >-
-  Write idiomatic, readable, reliable Python. Use when writing, reviewing, refactoring,
-  debugging, or explaining Python code, including functions, classes, modules, type
-  annotations, exceptions, files, iterators, async tasks, tests, CLIs, libraries,
-  dependencies, and pyproject.toml. Applies to Python projects and .py or .pyi files,
-  even when the request does not explicitly mention best practices or code quality.
+  Write idiomatic, readable, reliable Python. Use only when the user requests
+  writing or modifying Python code, or explicitly requests a code review. Includes
+  implementations, fixes, refactors, tests, and related project configuration.
+  Do not use for read-only exploration, explanations, or factual questions about
+  existing code. A language mention or .py/.pyi file alone is not a trigger.
+  Reuse guidance already loaded in context.
 ---
 
 # Python best practices

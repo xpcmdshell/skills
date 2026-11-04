@@ -1,13 +1,12 @@
 ---
 name: typescript-best-practices
 description: >-
-  Write idiomatic, readable, reliable TypeScript. Use when writing, reviewing,
-  refactoring, debugging, or explaining TypeScript code, including types, generics,
-  validation, async work, modules, libraries, services, scripts, and browser code.
-  Applies to .ts, .tsx, .mts, .cts, and .d.ts files, and TypeScript project tooling,
-  tsconfig.json, Bun workflows, and package exports. Use even when the request does
-  not explicitly mention best practices. Covers language engineering, not specific
-  frontend framework conventions.
+  Write idiomatic, readable, reliable TypeScript. Use only when the user requests
+  writing or modifying TypeScript code, or explicitly requests a code review.
+  Includes implementations, fixes, refactors, tests, and related project configuration.
+  Do not use for read-only exploration, explanations, or factual questions about
+  existing code. A language mention or TypeScript file alone is not a trigger.
+  Reuse guidance already loaded in context.
 ---
 
 # TypeScript best practices

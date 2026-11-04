@@ -1,12 +1,12 @@
 ---
 name: go-best-practices
 description: >-
-  Write idiomatic, readable, reliable Go. Use when writing, reviewing, refactoring,
-  debugging, or explaining Go or Golang code: packages, functions, methods,
-  interfaces, generics, errors, goroutines, channels, context, synchronization,
-  I/O, HTTP, SQL, CLIs, modules, go.mod, tests, benchmarks, and profiling.
-  Applies to .go files and Go projects even when the request does not explicitly
-  mention best practices or code quality.
+  Write idiomatic, readable, reliable Go. Use only when the user requests writing
+  or modifying Go/Golang code, or explicitly requests a code review. Includes
+  implementations, fixes, refactors, tests, and related project configuration.
+  Do not use for read-only exploration, explanations, or factual questions about
+  existing code. A language mention or .go file alone is not a trigger.
+  Reuse guidance already loaded in context.
 ---
 
 # Go best practices
