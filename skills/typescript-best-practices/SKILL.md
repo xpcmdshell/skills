@@ -58,6 +58,8 @@ TypeScript checks relationships between JavaScript values before execution. Its 
 - Use `type` for unions, tuples, and computed types. Use `interface` for object contracts that need extension or declaration merging.
 - Both forms work for ordinary object shapes. Follow local convention instead of rewriting one into the other.
 - Represent linked states with discriminated unions, not optional fields whose validity depends on unrelated booleans.
+- Use readonly tuples when an operation requires a first element or fixed grouping. Keep ordinary arrays when empty input is valid.
+- Use brands when mixing same-shaped identifiers causes real errors. Construct branded values through validation, not arbitrary casts.
 - Narrow with runtime checks and control flow. Use `never` to check exhaustive handling of closed unions.
 - Use `unknown` for values not yet established. Confine unavoidable `any` to a justified interoperability boundary.
 - Use `satisfies` to check a value against a contract while retaining useful inferred detail. It is not a runtime validator.
@@ -68,7 +70,8 @@ TypeScript checks relationships between JavaScript values before execution. Its 
 ## Keep runtime guarantees honest
 
 - Validate external data where it enters the system. Parsing JSON establishes syntax, not the expected shape or domain rules.
-- Prefer an existing schema library for substantial schemas. Derive static types from the schema when they describe the same contract.
+- Prefer an existing schema library for substantial schemas. Derive static types when the schema owns the contract.
+- When a public or generated type is authoritative, check the schema's output against that type instead of maintaining unchecked parallel definitions.
 - Treat `readonly` as a restriction through a typed reference. It does not freeze the object or remove mutable aliases.
 - Spread, array copies, and copying collection methods preserve references to nested objects.
 - Distinguish absent properties, explicit `undefined`, explicit `null`, and valid false-like values.
@@ -103,10 +106,10 @@ TypeScript checks relationships between JavaScript values before execution. Its 
 
 | Task | Reference |
 | --- | --- |
-| Model data, narrow unions, annotate code, or validate input | [Types and validation](references/types-and-validation.md) |
+| Model data, collection invariants, or branded IDs; annotate contracts or validate input | [Types and validation](references/types-and-validation.md) |
 | Traverse, group, sort, copy, compare, or retain values | [Values and iteration](references/values-and-iteration.md) |
 | Design functions, callbacks, generic APIs, classes, or module boundaries | [API design](references/api-design.md) |
-| Handle errors, HTTP, cancellation, concurrent work, or resource cleanup | [Errors, resources, and async](references/errors-resources-and-async.md) |
+| Handle errors, structured logging, HTTP, cancellation, concurrent work, or resource cleanup | [Errors, resources, and async](references/errors-resources-and-async.md) |
 | Configure module resolution, ship declarations, or publish a library | [Modules and packages](references/modules-and-packages.md) |
 | Set up Bun, compiler and lint checks, Git hooks, CI, or upgrades | [Tooling](references/tooling.md) |
 | Define behavioral checks, test consumers, or investigate performance | [Verification and performance](references/verification-and-performance.md) |

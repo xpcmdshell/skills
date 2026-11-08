@@ -59,8 +59,50 @@ export type RouteName = keyof typeof routes;
 - Prefer interface extension for an actual object hierarchy instead of long intersection chains.
 - Conflicting intersections can create unusable properties such as `never`. Extension reports incompatible property definitions directly.
 - An alias does not create nominal identity. Two structurally compatible aliases remain assignable.
-- Use a branded type only when distinguishing otherwise identical values prevents a real domain error.
-- A brand needs controlled construction or validation. Casting any string into a brand does not establish its invariant.
+
+## Match collection types to the operation
+
+- Keep ordinary arrays when empty input has a valid outcome. Require a nonempty tuple only when the operation needs an element.
+- Use tuples for fixed grouping, such as `readonly (readonly [T, T])[]` for pairs, rather than a flat array with an even-length comment.
+- Complete module, `collections.ts`, contrasting a required first element with ordinary absence:
+
+```ts
+export type NonEmpty<T> = readonly [T, ...T[]];
+
+export function first<T>(values: NonEmpty<T>): T {
+  return values[0];
+}
+
+export function firstOrUndefined<T>(values: readonly T[]): T | undefined {
+  return values[0];
+}
+```
+
+- Validate dynamic tuple length and elements before use. For example, `z.tuple([elementSchema], elementSchema)` establishes a required first slot.
+- `NonEmpty<T>` establishes index zero, not every numeric index. Calculated indexing still needs its own justification.
+- Readonly tuples prevent direct removal, but mutable aliases can still invalidate their shape. See [ownership and readonly guarantees](values-and-iteration.md).
+
+## Distinguish identifiers through controlled construction
+
+- Use brands when mixing otherwise identical values causes real errors. Reuse the project's convention and validate construction instead of casting.
+- Zod 4 boundary fragment: raw IDs are `unknown`; the existing consumer has signature `orderPath(userId: UserId, orderId: OrderId): string`.
+
+```ts
+import { z } from "zod";
+
+const UserIdSchema = z.uuid().brand<"UserId">();
+const OrderIdSchema = z.uuid().brand<"OrderId">();
+type UserId = z.infer<typeof UserIdSchema>;
+type OrderId = z.infer<typeof OrderIdSchema>;
+
+const path = orderPath(
+  UserIdSchema.parse(rawUserId),
+  OrderIdSchema.parse(rawOrderId),
+);
+```
+
+- Swapping branded IDs fails compilation. Runtime values remain strings; pass their branded types onward without parsing again.
+- The boundary must identify the semantic input. UUID syntax alone proves neither entity kind, existence, nor authorization.
 
 ## Model related alternatives together
 
@@ -139,7 +181,8 @@ export function describeReservation(reservation: Reservation): string {
 - Prefer a project's existing schema or generated contract. Avoid parallel handwritten types that drift from runtime validation.
 - Use direct checks for a genuinely small contract. Use an established schema library for substantial schemas and useful diagnostics.
 - Zod is a practical schema-first option, not a mandatory dependency. Keep suitable existing validators.
-- Derive the output type from the schema. Transforming schemas can have different input and output types.
+- Derive the output type when the schema owns the contract. Check schema output against an existing type when that type is authoritative.
+- Transforming schemas can have different input and output types. Validate compatibility with the parsed output, not merely the raw input.
 - Specify coercion, defaults, unknown-key handling, and error behavior. Silent coercion can change meaningful inputs.
 - Pass validated values onward with their concrete types. Revalidate only when trust, lifetime, or mutation changes the contract.
 - Follow [antipatterns](antipatterns.md) when reviewing extractor chains, redundant guards, or fallback behavior.
@@ -185,6 +228,9 @@ export async function fetchInventory(
 - `parse` throws on invalid input. `safeParse` returns a discriminated result when the caller routinely needs validation feedback.
 - Use asynchronous parsing when the schema has async refinements or transforms.
 - Do not replace validation with `fetchJson<Inventory>()` unless the implementation receives and runs a validator for that type.
+- If `Inventory` is independently defined, import it instead of declaring the inferred alias. Annotate `InventorySchema` with `z.ZodType<Inventory>`.
+- Incompatible schema output then fails compilation. The check establishes assignability, not exact equality or runtime domain constraints.
+- Use `satisfies z.ZodType<Inventory>` when the check must retain concrete schema methods and inferred detail.
 
 ## Sources
 
@@ -195,4 +241,6 @@ export async function fetchInventory(
 - [The satisfies operator](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-9.html#the-satisfies-operator) and [contextual inference example](https://github.com/microsoft/TypeScript/issues/55189): compatibility checks without overpromising unchanged inference.
 - [TypeScript 5.5 predicate semantics](https://devblogs.microsoft.com/typescript/announcing-typescript-5-5/#inferred-type-predicates): inferred and explicit predicate obligations.
 - [Enum pitfalls](https://www.typescriptlang.org/docs/handbook/enums.html#const-enum-pitfalls): runtime enums and consumer inlining risks.
-- [Zod basics](https://zod.dev/basics) and [schema APIs](https://zod.dev/api): parsing, errors, strict objects, and inferred types.
+- [Zod basics](https://zod.dev/basics), [branded types](https://zod.dev/api#branded-types), and [schema APIs](https://zod.dev/api): parsing, controlled branding, tuples, strict objects, and inferred types.
+- [TypeScript tuple types](https://www.typescriptlang.org/docs/handbook/2/objects.html#tuple-types) and [readonly tuples](https://www.typescriptlang.org/docs/handbook/2/objects.html#readonly-tuple-types): required positions, rest elements, and read-only access.
+- [Pstack TypeScript patterns](https://github.com/cursor/plugins/blob/main/pstack/skills/typescript-best-practices/references/patterns.md): practitioner guidance on collection contracts, branded identifiers, and schema conformance.

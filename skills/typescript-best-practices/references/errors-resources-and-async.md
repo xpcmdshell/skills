@@ -18,8 +18,13 @@
 - Preserve stable error codes where an API supplies them. Do not classify errors by matching human-readable messages.
 - Catch narrowly around the operation whose failure you understand. Avoid treating parser bugs or authorization failures as missing data.
 - Log at the owning boundary with useful context and redaction. Repeated logging at every rethrow produces duplicate incidents.
+- Use the existing structured logger for application diagnostics. Keep event names stable and put changing values in named fields.
+- Include relevant request, job, or trace identifiers. Carry existing correlation context across calls instead of generating an unrelated ID per log.
+- Follow the project's severity policy. An expected input rejection should not routinely be reported as a service failure.
+- Use the logger's supported error field or serializer to preserve stack and cause information. Do not rely on ordinary JSON serialization of `Error`.
 - Keep stack traces and secrets out of client responses. Preserve useful diagnostics at the responsible reporting boundary.
 - Follow [antipatterns](antipatterns.md#propagate-errors-unless-recovery-satisfies-the-contract) to distinguish permitted recovery from failure masking.
+- A CLI can write requested results to stdout. Keep diagnostic logs separate from machine-readable result streams.
 - A CLI can report once to stderr and set `process.exitCode = 1`. Immediate exit can interrupt pending output or cleanup.
 
 ## Await the operation inside its failure boundary
@@ -142,6 +147,7 @@ export async function fetchPair(
 
 ## Sources
 
+- [OpenTelemetry logs data model](https://opentelemetry.io/docs/specs/otel/logs/data-model/): event names, structured attributes, severity, and trace correlation.
 - [MDN Promise.all](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all): ordering, early rejection, and lack of cancellation.
 - [MDN AbortSignal](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal): cancellation contracts, combined signals, and listener cleanup.
 - [MDN resource management](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Resource_management): disposal order, lifetime, and overlapping errors.
